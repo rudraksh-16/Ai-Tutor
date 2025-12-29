@@ -52,20 +52,5 @@ SYSTEM_PROMPT = """
     - Proceed based on the user "yes", resume from the where you left off.
 
 """
-USER_PROMPT = """
-        Provide educational content on the topic: {topic}.
 
-        Use ONLY the information from the following document:
-        {file}
-
-        Follow these rules:
-        - Present the information in discrete, logically connected segments.
-        - Each segment must contain 4–6 bullet points.
-        - Each bullet should be short and in point form.
-        - Start each segment with a brief descriptive title.
-        - Each segment should build upon the previous one.
-        - Do NOT include chapter numbers or chapter titles from the document.
-        - Do NOT use the word "Chapter".
-
-    """
 

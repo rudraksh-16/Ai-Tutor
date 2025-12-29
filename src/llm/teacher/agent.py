@@ -15,7 +15,7 @@ class Teacher():
         self.teacher_agent = create_agent(
             model=self.llm,
             system_prompt = SYSTEM_PROMPT,
-            tools=[ get_user_curriculum,load_file],
+            tools=[get_user_curriculum,load_file],
             checkpointer=self.memory
         )
     def invoke(self,user_input):
