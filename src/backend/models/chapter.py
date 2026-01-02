@@ -13,7 +13,7 @@ class Chapter(BaseModel):
     status = Column(Enum(Status), nullable=False)
     outline = Column(String, nullable=False)
    
-    chapter_plan = relationship("Chapter_Plan",back_populates="chapter",cascade="all, delete-orphan")
+    chapter_plan = relationship("ChapterPlan",back_populates="chapter",cascade="all, delete-orphan")
 
     topic = relationship(
         "Topic", back_populates="chapters"

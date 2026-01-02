@@ -15,5 +15,3 @@ class Topic(BaseModel):
     chapters = relationship(
         "Chapter", back_populates="topic", cascade="all, delete-orphan",order_by="Chapter.sequence"
     )
-
-# Topics (ID, User_ID, Title, Status, User_summary)
