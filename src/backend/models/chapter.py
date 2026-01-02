@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey,Enum
+from sqlalchemy import Column, String, Integer, ForeignKey,Enum, Text
 from sqlalchemy.orm import relationship
 from src.backend.models.base import BaseModel
 from src.backend.enums.status import Status
@@ -11,7 +11,7 @@ class Chapter(BaseModel):
     title = Column(String, nullable=False)
     sequence = Column(Integer, nullable=False)  
     status = Column(Enum(Status), nullable=False)
-    outline = Column(String, nullable=False)
+    outline = Column(Text, nullable=False)
    
     chapter_plan = relationship("ChapterPlan",back_populates="chapter",cascade="all, delete-orphan")
 
