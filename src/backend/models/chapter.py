@@ -7,13 +7,15 @@ from src.backend.enums.status import Status
 class Chapter(BaseModel):
     __tablename__ = "chapters"
 
-    curriculum_id = Column(Integer, ForeignKey("curriculums.id", ondelete="CASCADE"),nullable=False)
-    sequence_order = Column(Integer, nullable=False)    
+    topic_id = Column(Integer, ForeignKey("topics.id", ondelete="CASCADE"),nullable=False)  
     title = Column(String, nullable=False)
+    sequence = Column(Integer, nullable=False)  
     status = Column(Enum(Status), nullable=False)
-    content = Column(String, nullable=False)
+    outline = Column(String, nullable=False)
    
+    chapter_plan = relationship("Chapter_Plan",back_populates="chapter",cascade="all, delete-orphan")
 
-    curriculum = relationship(
-        "Curriculum", back_populates="chapters"
+    topic = relationship(
+        "Topic", back_populates="chapters"
     )
+  
