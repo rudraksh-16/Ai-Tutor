@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
+
 from src.backend.models.base import BaseModel
 
 
@@ -8,6 +9,4 @@ class User(BaseModel):
 
     name = Column(String, nullable=False)
 
-    topics = relationship(
-        "Topic", back_populates="user", cascade="all, delete-orphan"
-    )
+    topics = relationship("Topic", back_populates="user", cascade="all, delete-orphan")
