@@ -35,7 +35,7 @@ class GetUserCurriculumArgs:
     args = [("topic_id", Args(type=int, description="ID of the topic", required=True))]
 
 
-def get_user_curriculum(topic_id: int) -> str:
+def get_user_curriculum(topic_id: int) -> dict:
     """Get curriculum plan by topic id."""
     db = SessionLocal()
     try:
