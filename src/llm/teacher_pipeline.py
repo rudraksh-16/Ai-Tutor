@@ -9,8 +9,8 @@ from src.llm.teacher.tools.tools import (
 
 def run_iteration(topic_id):
     agent = Teacher(topic_id)
-    agent.add_tool(load_file, LoadFileArgs)
-    agent.add_tool(get_user_curriculum, GetUserCurriculumArgs)
+    agent.add_tool(load_file, LoadFileArgs,'Load chapter content by chapter sequence and topic id.')
+    agent.add_tool(get_user_curriculum, GetUserCurriculumArgs,'Get curriculum plan by topic id.')
 
     while True:
         assistant_text = agent.invoke()

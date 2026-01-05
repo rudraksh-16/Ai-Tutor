@@ -14,13 +14,18 @@ class Teacher:
         self.chat_history = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
+                "role": "system",
+                "content": "Call get_user_detail now to retrieve the curriculum before continuing."
+
+            },
+            {
                 "role": "user",
                 "content": "Hello, I want to start a new learning journey.",
             },
         ]
 
-    def add_tool(self, func, args_class):
-        tool = Tool(func, args_class)
+    def add_tool(self, func, args_class,description):
+        tool = Tool(func, args_class,description)
         self.tools[tool.name] = tool
 
     def execute_tool(self, name, args):
@@ -40,14 +45,9 @@ class Teacher:
         )
         return response
 
-    def schema_print(self):
-        result = [t.schema() for t in self.tools.values()]
-        print(json.dumps(result, indent=4))
-
     def invoke(self):
         while True:
             response = self.llm_call()
-            # self.schema_print()
             msg = response.output[0]
             # for msg in response.output:
             if msg.type == "function_call":

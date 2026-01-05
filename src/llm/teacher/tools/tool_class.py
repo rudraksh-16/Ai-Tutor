@@ -1,8 +1,8 @@
 class Tool:
-    def __init__(self, func, args_class):
+    def __init__(self, func, args_class,description):
         self.func = func
         self.name = func.__name__
-        self.description = func.__doc__
+        self.description = description
         self.args_class = args_class
 
     def execute(self, **kwargs):
