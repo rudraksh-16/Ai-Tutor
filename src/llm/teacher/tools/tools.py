@@ -16,11 +16,7 @@ class LoadFileArgs:
     ]
 
 
-class GetUserCurriculumArgs:
-    args = [("topic_id", Args(type=int, description="ID of the topic", required=True))]
-
-
-def load_file(sequence: int, topic_id: int) -> str:
+def load_chapter_content(sequence: int, topic_id: int) -> str:
     """Load chapter content by chapter sequence and topic id."""
     db = SessionLocal()
     try:
@@ -33,6 +29,10 @@ def load_file(sequence: int, topic_id: int) -> str:
         return result
     finally:
         db.close()
+
+
+class GetUserCurriculumArgs:
+    args = [("topic_id", Args(type=int, description="ID of the topic", required=True))]
 
 
 def get_user_curriculum(topic_id: int) -> str:

@@ -11,12 +11,12 @@ class Teacher:
         self.model = "gpt-4.1-mini"
         self.curriculam_id = curriculam_id
         self.tools = {}
+        self.temperature = 0.5
         self.chat_history = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
                 "role": "system",
-                "content": "Call get_user_detail now to retrieve the curriculum before continuing."
-
+                "content": "Call get_user_detail now to retrieve the curriculum before continuing.",
             },
             {
                 "role": "user",
@@ -24,12 +24,12 @@ class Teacher:
             },
         ]
 
-    def add_tool(self, func, args_class,description):
-        tool = Tool(func, args_class,description)
+    def add_tool(self, func, args_class, description):
+        tool = Tool(func, args_class, description)
         self.tools[tool.name] = tool
 
     def execute_tool(self, name, args):
-        if name in {"get_user_curriculum", "load_file"}:
+        if name in {"get_user_curriculum", "load_chapter_content"}:
             args["topic_id"] = self.curriculam_id
         return self.tools[name].execute(**args)
 
@@ -39,7 +39,7 @@ class Teacher:
     def llm_call(self):
         response = self.client.responses.create(
             model=self.model,
-            temperature=0.5,
+            temperature=self.temperature,
             tools=[t.schema() for t in self.tools.values()],
             input=self.chat_history,
         )
@@ -53,19 +53,21 @@ class Teacher:
             if msg.type == "function_call":
                 tool_name = msg.name
                 tool_arg = json.loads(msg.arguments)
-
-                result = self.execute_tool(tool_name, tool_arg)
-
                 self.chat_history.append(
                     {
-                        "role": "developer",
-                        "content": json.dumps(
-                            {
-                                "type": "tool_result",
-                                "tool_name": tool_name,
-                                "result": result,
-                            }
-                        ),
+                        "type": "function_call",
+                        "name": tool_name,
+                        "arguments": json.dumps(tool_arg),
+                        "call_id": msg.id,
+                    }
+                )
+
+                result = self.execute_tool(tool_name, tool_arg)
+                self.chat_history.append(
+                    {
+                        "type": "function_call_output",
+                        "call_id": msg.id,
+                        "output": json.dumps(result),
                     }
                 )
 

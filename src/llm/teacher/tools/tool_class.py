@@ -1,5 +1,5 @@
 class Tool:
-    def __init__(self, func, args_class,description):
+    def __init__(self, func, args_class, description):
         self.func = func
         self.name = func.__name__
         self.description = description

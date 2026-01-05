@@ -1,5 +1,5 @@
-from src.llm.teacher_pipeline import run_iteration
+from src.llm.orchestration import run_teacher_agent
 
 
 if __name__ == "__main__":
-    run_iteration(1)
+    run_teacher_agent(1)
