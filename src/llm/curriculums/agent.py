@@ -25,7 +25,6 @@ class CurriculumAgent:
         ]
 
         self.saved_chapters = set()
-        self.expected_chapters = None
         self.save_failures = 0
 
 
