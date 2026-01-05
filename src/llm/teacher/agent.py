@@ -19,8 +19,8 @@ class Teacher:
             },
         ]
 
-    def add_tool(self, func,args_class):
-        tool = Tool(func,args_class)
+    def add_tool(self, func, args_class):
+        tool = Tool(func, args_class)
         self.tools[tool.name] = tool
 
     def execute_tool(self, name, args):
@@ -43,6 +43,7 @@ class Teacher:
     def schema_print(self):
         result = [t.schema() for t in self.tools.values()]
         print(json.dumps(result, indent=4))
+
     def invoke(self):
         while True:
             response = self.llm_call()

@@ -1,12 +1,9 @@
-
-
 class Tool:
-    def __init__(self, func,args_class):
+    def __init__(self, func, args_class):
         self.func = func
         self.name = func.__name__
         self.description = func.__doc__
         self.args_class = args_class
-
 
     def execute(self, **kwargs):
         return self.func(**kwargs)
@@ -16,17 +13,13 @@ class Tool:
         required = []
 
         for name, args in self.args_class.args:
-            prop = {
-                "type": self._map_type(args.type),
-                "description": args.description
-            }
+            prop = {"type": self._map_type(args.type), "description": args.description}
             if args.enum:
                 prop["enum"] = args.enum
-            
-            properties[name]=prop
+
+            properties[name] = prop
             if args.required == True:
                 required.append(name)
-
 
         return {
             "type": "function",

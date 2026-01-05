@@ -1,5 +1,3 @@
-import json
-
 from src.backend.db.database import SessionLocal
 from src.backend.models.chapter import Chapter
 from src.backend.models.topic import Topic
@@ -7,15 +5,19 @@ from src.backend.models.chapter_plan import ChapterPlan
 from src.llm.utils.helper import topic_to_dict
 from src.llm.teacher.tools.args_schema import Args
 
+
 class LoadFileArgs:
     args = [
-        ("sequence",Args(type=int,description="Chapter sequence number",required=True)),
-        ("topic_id",Args(type=int,description="ID of the topic",required=True) )
-    ] 
-class GetUserCurriculumArgs:
-    args = [
-        ("topic_id",Args(type=int,description="ID of the topic",required=True) )
+        (
+            "sequence",
+            Args(type=int, description="Chapter sequence number", required=True),
+        ),
+        ("topic_id", Args(type=int, description="ID of the topic", required=True)),
     ]
+
+
+class GetUserCurriculumArgs:
+    args = [("topic_id", Args(type=int, description="ID of the topic", required=True))]
 
 
 def load_file(sequence: int, topic_id: int) -> str:
@@ -54,10 +56,7 @@ def get_user_curriculum(topic_id: int) -> str:
 
         title = data[0].topic_title
         result = [topic_to_dict(t) for t in data]
-        plan = {"title": title, "curriculum": json.dumps(result)}
+        plan = {"title": title, "curriculum": result}
         return plan
     finally:
         db.close()
-
-
-

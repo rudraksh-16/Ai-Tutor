@@ -1,11 +1,16 @@
 from src.llm.teacher.agent import Teacher
-from src.llm.teacher.tools.tools import load_file, get_user_curriculum,LoadFileArgs,GetUserCurriculumArgs
+from src.llm.teacher.tools.tools import (
+    load_file,
+    get_user_curriculum,
+    LoadFileArgs,
+    GetUserCurriculumArgs,
+)
 
 
 def run_iteration(topic_id):
     agent = Teacher(topic_id)
-    agent.add_tool(load_file,LoadFileArgs)
-    agent.add_tool(get_user_curriculum,GetUserCurriculumArgs)
+    agent.add_tool(load_file, LoadFileArgs)
+    agent.add_tool(get_user_curriculum, GetUserCurriculumArgs)
 
     while True:
         assistant_text = agent.invoke()
