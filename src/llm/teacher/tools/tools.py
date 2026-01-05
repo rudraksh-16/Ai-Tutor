@@ -2,7 +2,7 @@ from src.backend.db.database import SessionLocal
 from src.backend.models.chapter import Chapter
 from src.backend.models.topic import Topic
 from src.backend.models.chapter_plan import ChapterPlan
-from src.llm.utils.helper import topic_to_dict
+from src.llm.utils.helper import chapter_to_dict
 from src.llm.teacher.tools.args_schema import Args
 
 
@@ -55,7 +55,7 @@ def get_user_curriculum(topic_id: int) -> str:
             raise ValueError(f"No curriculum found for topic_id={topic_id}")
 
         title = data[0].topic_title
-        result = [topic_to_dict(t) for t in data]
+        result = [chapter_to_dict(t) for t in data]
         plan = {"title": title, "curriculum": result}
         return plan
     finally:

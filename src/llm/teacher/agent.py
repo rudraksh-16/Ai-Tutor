@@ -6,12 +6,13 @@ from src.llm.teacher.prompt import SYSTEM_PROMPT
 
 
 class Teacher:
-    def __init__(self, curriculam_id):
+    def __init__(self, curriculam_id,model="gpt-4.1-mini",temperature=0.5):
         self.client = OpenAI()
-        self.model = "gpt-4.1-mini"
+        self.model = model
         self.curriculam_id = curriculam_id
         self.tools = {}
-        self.temperature = 0.5
+        self.temperature = temperature
+        self.max_iteration = 8
         self.chat_history = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
@@ -46,7 +47,9 @@ class Teacher:
         return response
 
     def invoke(self):
-        while True:
+        step=0
+        while step<self.max_iteration:
+            step+=1
             response = self.llm_call()
             msg = response.output[0]
             # for msg in response.output:
