@@ -1,4 +1,4 @@
-from src.llm.teacher_pipline import run_iteration
+from src.llm.teacher_pipeline import run_iteration
 
 
 if __name__ == "__main__":

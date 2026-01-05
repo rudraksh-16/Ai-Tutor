@@ -10,11 +10,11 @@ from src.llm.teacher.tools.args_schema import Args
 class LoadFileArgs:
     args = [
         ("sequence",Args(type=int,description="Chapter sequence number",required=True)),
-        ("topic_id",Args(type=int,description="Topic Id",required=True) )
+        ("topic_id",Args(type=int,description="ID of the topic",required=True) )
     ] 
 class GetUserCurriculumArgs:
     args = [
-        ("topic_id",Args(type=int,description="Topic Id",required=True) )
+        ("topic_id",Args(type=int,description="ID of the topic",required=True) )
     ]
 
 
@@ -49,6 +49,9 @@ def get_user_curriculum(topic_id: int) -> str:
             .order_by(Chapter.sequence)
             .all()
         )
+        if not data:
+            raise ValueError(f"No curriculum found for topic_id={topic_id}")
+
         title = data[0].topic_title
         result = [topic_to_dict(t) for t in data]
         plan = {"title": title, "curriculum": json.dumps(result)}
