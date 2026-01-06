@@ -1,18 +1,18 @@
-from src.llm.curriculums.agent import CurriculumAgent
-from src.llm.curriculums.tools.save_curriculum import (
+from src.llm.curriculum_agent.agent import CurriculumAgent
+from src.llm.curriculum_agent.tools.save_curriculum import (
     save_curriculum,
     SaveCurriculumArgs
 )
-from src.llm.curriculums.tools.get_curriculum import (
+from src.llm.curriculum_agent.tools.get_curriculum import (
     get_topics,
     get_curriculum,
     GetCurriculumArgs
 )
-from src.llm.curriculums.tools.edit_curriculum import (
+from src.llm.curriculum_agent.tools.edit_curriculum import (
     edit_curriculum,
     EditCurriculumArgs
 )
-from src.llm.curriculums.constant import Constants
+from src.llm.curriculum_agent.constant import Constants
 
 
 def run_curriculum_agent(user_id: int):

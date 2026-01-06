@@ -1,7 +1,7 @@
 from src.backend.models.topic import Topic
 from src.backend.models.chapter import Chapter
 from src.backend.db.database import SessionLocal
-from src.llm.curriculums.tools.argument_spec import ArgumentSpec as Args
+from src.llm.curriculum_agent.tools.argument_spec import ArgumentSpec as Args
 from typing import Optional
 
 

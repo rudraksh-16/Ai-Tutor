@@ -2,9 +2,9 @@ import json
 from openai import OpenAI
 
 from src.llm.config import LLMConfig
-from src.llm.curriculums.prompts.system_prompts import SYSTEM_PROMPT
-from src.llm.curriculums.tools.tool_registry import ToolRegistry
-from src.llm.curriculums.constant import Constants
+from src.llm.curriculum_agent.prompt import SYSTEM_PROMPT
+from src.llm.curriculum_agent.tools.tool_registry import ToolRegistry
+from src.llm.curriculum_agent.constant import Constants
 
 
 class CurriculumAgent:
