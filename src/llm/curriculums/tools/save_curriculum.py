@@ -83,7 +83,6 @@ def save_curriculum(
         db.add(new_chapter)
         db.commit()
 
-
         return {
             "status": "success",
             "message": "Curriculum saved successfully",
