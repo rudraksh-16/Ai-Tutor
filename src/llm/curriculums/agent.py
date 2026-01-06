@@ -14,13 +14,11 @@ class CurriculumAgent:
         model: str = Constants.MODEL,
         temperature: float = Constants.TEMPERATURE,
         max_step: int = Constants.MAX_STEPS,
-        max_tokens: int = Constants.MAX_TOKENS,
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.user_id = user_id
         self.model = model
         self.temperature = temperature
-        self.max_tokens = max_tokens
         self.tools = {}
         self.chat_history = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -56,7 +54,6 @@ class CurriculumAgent:
             model=self.model,
             input=self.chat_history,
             temperature=self.temperature,
-            max_tokens=self.max_tokens,
             tools=[t.schema() for t in self.tools.values()],
             tool_choice="auto",
         )
@@ -68,14 +65,12 @@ class CurriculumAgent:
         while step < max_steps:
 
             step += 1
-            print(f"\n-------- step {step} --------")
             response = self._call_llm()
 
             assistant_text = ""
             # tool_calls = []
             print(response.output)
             for item in response.output:
-                print(f"[debug]------> {item}")
                 if item.type == "function_call":
                     tool_name = item.name
                     args = json.loads(item.arguments)
