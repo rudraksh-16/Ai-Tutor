@@ -7,7 +7,7 @@ from src.llm.curriculums.tools.tool_registry import ToolRegistry
 
 
 class CurriculumAgent:
-    def __init__(self, user_id: int, model: str = "gpt-4.1-mini", temperature: float = 0.2):
+    def __init__(self, user_id: int, model: str = "gpt-4.1-mini", temperature: float = 0.2, max_step: int = 10):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.user_id = user_id
         self.model = model
@@ -19,10 +19,11 @@ class CurriculumAgent:
                 "content": SYSTEM_PROMPT
             },
             {
-                "role": "user",
-                "content": "Would you ask me about do i want to add new curriculum or view and edit already existing curriculum in one line.",
+                "role": "system",
+                "content": "Ask the user if they would like to create a new curriculum or manage an existing one in a single sentence.",
             },
         ]
+        self.max_step = max_step
 
         self.saved_chapters = set()
         self.save_failures = 0
@@ -58,72 +59,57 @@ class CurriculumAgent:
         )
     
     def invoke(self):
-        max_steps = 10
+        max_steps = self.max_step
         step = 0
 
         while step < max_steps:
             
             step += 1
-
+            print(f"\n-------- step {step} --------")
             response = self._call_llm()
 
             assistant_text = ""
-            tool_calls = []
-
+            # tool_calls = []
+            print(response.output)
             for item in response.output:
-                if item.type == "message" and item.role == "assistant":
-                    for block in item.content:
-                        if block.type == "output_text":
-                            assistant_text += block.text
-
-                elif item.type in {"tool_call", "function_call"}:
-                    tool_calls.append(item)
-
-            if tool_calls:
-
-                for call in tool_calls:
-                    args = json.loads(call.arguments)
+                print(f"[debug]------> {item}" )
+                if item.type == "function_call":
+                    tool_name = item.name
+                    args = json.loads(item.arguments)
 
                     self.chat_history.append({
                         "type": "function_call",
-                        "name": call.name,
+                        "name": tool_name,
                         "arguments": json.dumps(args),
-                        "call_id": call.id,
+                        "call_id": item.id,
                         })
                     
-                    result = self.execute_tool(call.name, args)
+                    result = self.execute_tool(item.name, args)
 
                     self.chat_history.append({
                         "type": "function_call_output",
-                        "call_id": call.id,
+                        "call_id": item.id,
                         "output": json.dumps(result),
                     })
 
-                    if call.name == "save_curriculum":
-                        chapter_no = args.get("chapter_number")
+                    if tool_name == "save_curriculum":
 
                         if result.get("status") == "success":
-                            self.saved_chapters.add(chapter_no)
+                            self.saved_chapters.add(args.get("chapter_number"))
                             self.save_failures = 0
                         else:
                             self.save_failures += 1
+                elif item.type == "message":
+                    for part in item.content:
+                        if part.type == "output_text":
+                            assistant_text += part.text
 
-                    self.add_chat(
-                        "developer",
-                        json.dumps({
-                            "type": "tool_result",
-                            "tool_name": call.name,
-                            "arguments": args,
-                            "result": result,
-                        }),
-                    )
-
-                if self.save_failures > 1:
+            if self.save_failures > 1:
                     return "Apologies, there was an issue saving your curriculum."
 
-                continue
 
-            if assistant_text:
+
+            if assistant_text and step <= max_steps:
                 self.add_chat("assistant", assistant_text)
                 return assistant_text
 

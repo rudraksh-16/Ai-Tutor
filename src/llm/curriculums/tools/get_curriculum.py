@@ -7,8 +7,8 @@ from src.llm.curriculums.tools.argument_spec import ArgumentSpec as Args
 def get_curriculum_topics(user_id: int):
     db = SessionLocal()
     try:
-        rows = db.query(Topic.title).filter(Topic.user_id == user_id).all()
-        return [r[0] for r in rows]
+        topics = db.query(Topic.title).filter(Topic.user_id == user_id).all()
+        return topics
     finally:
         db.close()
 

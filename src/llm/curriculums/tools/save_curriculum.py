@@ -60,7 +60,7 @@ def save_curriculum(
         )
         if existing_topic:
             topic_id = existing_topic.id
-            pass
+
         else:
             new_topic = Topic(
                 user_id=user_id,
@@ -69,8 +69,7 @@ def save_curriculum(
                 user_summary=user_summary,
             )
             db.add(new_topic)
-            db.commit()
-            db.refresh(new_topic)
+            db.flush()
             topic_id = new_topic.id
 
         new_chapter = Chapter(
@@ -83,12 +82,10 @@ def save_curriculum(
 
         db.add(new_chapter)
         db.commit()
-        db.refresh(new_chapter)
+
 
         return {
             "status": "success",
-            "topic_id": topic_id,
-            "chapter_id": new_chapter.id,
             "message": "Curriculum saved successfully",
         }
 

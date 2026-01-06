@@ -50,21 +50,21 @@ def modify_saved_curriculum(
         dict: Operation result.
     """
 
+    print(chapter_number)
     if not chapter_updated_title and not chapter_updated_outline:
         return {"status": "error", "message": "No update fields provided"}
 
     db = SessionLocal()
     try:
-        topic_row = (
+        topic_id = (
             db.query(Topic.id)
             .filter(Topic.title == topic_title, Topic.user_id == user_id)
-            .first()
+            .limit(1)
+            .scalar()
         )
 
-        if not topic_row:
+        if topic_id is None:
             return {"status": "error", "message": "Topic not found."}
-
-        topic_id = topic_row[0]
 
         chapter = (
             db.query(Chapter)
@@ -86,7 +86,6 @@ def modify_saved_curriculum(
 
         return {
             "status": "success",
-            "chapter_id": chapter.id,
             "message": "Chapter updated successfully",
         }
 
