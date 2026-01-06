@@ -56,19 +56,14 @@ def edit_curriculum(
 
     db = SessionLocal()
     try:
-        topic_id = (
-            db.query(Topic.id)
-            .filter(Topic.title == topic_title, Topic.user_id == user_id)
-            .limit(1)
-            .scalar()
-        )
-
-        if topic_id is None:
-            return {"status": "error", "message": "Topic not found."}
-
         chapter = (
             db.query(Chapter)
-            .filter(Chapter.topic_id == topic_id, Chapter.sequence == chapter_number)
+            .join(Topic, Chapter.topic_id == Topic.id)
+            .filter(
+                Topic.title == topic_title,
+                Topic.user_id == user_id,
+                Chapter.sequence == chapter_number
+            )
             .first()
         )
 
