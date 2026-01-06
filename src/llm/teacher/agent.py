@@ -3,13 +3,13 @@ from openai import OpenAI
 
 from src.llm.teacher.tools.tool_class import Tool
 from src.llm.teacher.prompt import SYSTEM_PROMPT
-from src.llm.config import Config
-from src.llm.constant import Constant
+from src.llm.config import LLMConfig
+from src.llm.constant import Constants
 
 
 class Teacher:
-    def __init__(self, curriculam_id,model=Constant.MODEL_NAME,temperature=Constant.MODEL_TEMPERATURE,max_iteration=Constant.MAX_ITERATION):
-        self.client = OpenAI(Config.OPENAI_API_KEY)
+    def __init__(self, curriculam_id,model=Constants.MODEL_NAME,temperature=Constants.MODEL_TEMPERATURE,max_iteration=Constants.MAX_ITERATION):
+        self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.model = model
         self.curriculam_id = curriculam_id
         self.tools = {}
