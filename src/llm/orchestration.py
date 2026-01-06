@@ -4,19 +4,20 @@ from src.llm.curriculums.tools.save_curriculum import (
     SaveCurriculumArgs
 )
 from src.llm.curriculums.tools.get_curriculum import (
-    get_curriculum_topics,
+    get_topics,
     get_curriculum,
     GetCurriculumArgs
 )
-from src.llm.curriculums.tools.modify_saved_curriculum import (
-    modify_saved_curriculum,
-    ModifySavedCurriculumArgs
+from src.llm.curriculums.tools.edit_curriculum import (
+    edit_curriculum,
+    EditCurriculumArgs
 )
+from src.llm.curriculums.constant import Constants
 
 
 def run_curriculum_agent(user_id: int):
 
-    agent = CurriculumAgent(user_id=user_id)
+    agent = CurriculumAgent(user_id=user_id, model=Constants.MODEL, temperature=Constants.TEMPERATURE, max_iteration=Constants.MAX_ITERATION)
     agent.add_tool(
         save_curriculum,
         SaveCurriculumArgs,
@@ -28,13 +29,13 @@ def run_curriculum_agent(user_id: int):
         description="Fetches the complete curriculum for a given topic from the database.",
     )
     agent.add_tool(
-        modify_saved_curriculum,
-        ModifySavedCurriculumArgs,
+        edit_curriculum,
+        EditCurriculumArgs,
         description="Modifies details of a saved curriculum chapter in the database.",
     )
 
     print("AI Tutor started. Type 'exit' or 'quit' to stop.\n")
-    available_curriculums = get_curriculum_topics(user_id)
+    available_curriculums = get_topics(user_id)
     if available_curriculums:
         agent.add_chat(
             "system", f"User has existing curriculums: {available_curriculums}"
@@ -46,7 +47,7 @@ def run_curriculum_agent(user_id: int):
     while True:
         user_input = input("\n[You]: ").strip()
 
-        if user_input.lower() in {"exit", "quit", "bye"}:
+        if user_input.lower() in {"exit", "quit", "bye"}:  
             print("\nAI: Goodbye!")
             break
 

@@ -5,7 +5,7 @@ from src.llm.curriculums.tools.argument_spec import ArgumentSpec as Args
 from typing import Optional
 
 
-class ModifySavedCurriculumArgs:
+class EditCurriculumArgs:
     args = [
         ("user_id", Args(type=int, description="The ID of the user", required=True)),
         (
@@ -29,7 +29,7 @@ class ModifySavedCurriculumArgs:
     ]
 
 
-def modify_saved_curriculum(
+def edit_curriculum(
     user_id: int,
     topic_title: str,
     chapter_number: int,

@@ -4,7 +4,7 @@ from src.backend.db.database import SessionLocal
 from src.llm.curriculums.tools.argument_spec import ArgumentSpec as Args
 
 
-def get_curriculum_topics(user_id: int):
+def get_topics(user_id: int):
     db = SessionLocal()
     try:
         topics = db.query(Topic.title).filter(Topic.user_id == user_id).all()

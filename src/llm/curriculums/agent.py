@@ -4,16 +4,16 @@ from openai import OpenAI
 from src.llm.config import LLMConfig
 from src.llm.curriculums.prompts.system_prompts import SYSTEM_PROMPT
 from src.llm.curriculums.tools.tool_registry import ToolRegistry
-from src.llm.constant import Constants
+from src.llm.curriculums.constant import Constants
 
 
 class CurriculumAgent:
     def __init__(
         self,
         user_id: int,
-        model: str = Constants.MODEL,
-        temperature: float = Constants.TEMPERATURE,
-        max_iteration: int = Constants.MAX_ITERATION
+        model: str = Constants.DEFAULT_MODEL,
+        temperature: float = Constants.DEFAULT_TEMPERATURE,
+        max_iteration: int = Constants.DEFAULT_MAX_ITERATION
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.user_id = user_id
