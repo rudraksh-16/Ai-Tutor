@@ -5,7 +5,7 @@ from src.llm.curriculums.tools.argument_spec import ArgumentSpec as Args
 from src.backend.enums.status import Status
 
 
-class save_curriculumArgs:
+class SaveCurriculumArgs:
     args = [
         ("user_id", Args(type=int, description="The ID of the user", required=True)),
         ("topic", Args(type=str, description="The curriculum topic", required=True)),

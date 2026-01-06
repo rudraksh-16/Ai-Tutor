@@ -5,7 +5,7 @@ from src.llm.curriculums.tools.argument_spec import ArgumentSpec as Args
 from typing import Optional
 
 
-class modify_saved_curriculumArgs:
+class ModifySavedCurriculumArgs:
     args = [
         ("user_id", Args(type=int, description="The ID of the user", required=True)),
         (
@@ -82,7 +82,6 @@ def modify_saved_curriculum(
             chapter.outline = chapter_updated_outline
 
         db.commit()
-        db.refresh(chapter)
 
         return {
             "status": "success",

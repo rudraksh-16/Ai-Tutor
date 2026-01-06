@@ -13,7 +13,7 @@ class CurriculumAgent:
         user_id: int,
         model: str = Constants.MODEL,
         temperature: float = Constants.TEMPERATURE,
-        max_step: int = Constants.MAX_STEPS,
+        max_iteration: int = Constants.MAX_ITERATION
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.user_id = user_id
@@ -27,7 +27,7 @@ class CurriculumAgent:
                 "content": "Ask the user if they would like to create a new curriculum or manage an existing one in a single sentence.",
             },
         ]
-        self.max_step = max_step
+        self.max_iteration = max_iteration
 
         self.saved_chapters = set()
         self.save_failures = 0
@@ -59,10 +59,10 @@ class CurriculumAgent:
         )
 
     def invoke(self):
-        max_steps = self.max_step
+        max_iteration = self.max_iteration
         step = 0
 
-        while step < max_steps:
+        while step < max_iteration:
 
             step += 1
             response = self._call_llm()
@@ -109,7 +109,7 @@ class CurriculumAgent:
             if self.save_failures > 1:
                 return "Apologies, there was an issue saving your curriculum."
 
-            if assistant_text and step <= max_steps:
+            if assistant_text and step <= max_iteration:
                 self.add_chat("assistant", assistant_text)
                 return assistant_text
 

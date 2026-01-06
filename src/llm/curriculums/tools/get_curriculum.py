@@ -13,7 +13,7 @@ def get_curriculum_topics(user_id: int):
         db.close()
 
 
-class get_curriculumArgs:
+class GetCurriculumArgs:
     args = [
         ("user_id", Args(type=int, description="The ID of the user", required=True)),
         (

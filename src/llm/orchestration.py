@@ -1,16 +1,16 @@
 from src.llm.curriculums.agent import CurriculumAgent
 from src.llm.curriculums.tools.save_curriculum import (
     save_curriculum,
-    save_curriculumArgs,
+    SaveCurriculumArgs
 )
 from src.llm.curriculums.tools.get_curriculum import (
     get_curriculum_topics,
     get_curriculum,
-    get_curriculumArgs,
+    GetCurriculumArgs
 )
 from src.llm.curriculums.tools.modify_saved_curriculum import (
     modify_saved_curriculum,
-    modify_saved_curriculumArgs,
+    ModifySavedCurriculumArgs
 )
 
 
@@ -19,17 +19,17 @@ def run_curriculum_agent(user_id: int):
     agent = CurriculumAgent(user_id=user_id)
     agent.add_tool(
         save_curriculum,
-        save_curriculumArgs,
+        SaveCurriculumArgs,
         description="Saves a generated curriculum after user confirmation to the database.",
     )
     agent.add_tool(
         get_curriculum,
-        get_curriculumArgs,
+        GetCurriculumArgs,
         description="Fetches the complete curriculum for a given topic from the database.",
     )
     agent.add_tool(
         modify_saved_curriculum,
-        modify_saved_curriculumArgs,
+        ModifySavedCurriculumArgs,
         description="Modifies details of a saved curriculum chapter in the database.",
     )
 
