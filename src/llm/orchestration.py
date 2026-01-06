@@ -1,17 +1,25 @@
-from src.llm.teacher.agent import Teacher
-from src.llm.teacher.tools.tools import (
-    get_chapter_content,
+from src.llm.teacher.agent import TeacherAgent
+from src.llm.constant import Constants
+from src.llm.teacher.tools.get_user_curriculum import (
     get_user_curriculum,
-    GetFileArgs,
     GetUserCurriculumArgs,
+)
+from src.llm.teacher.tools.get_chapter_content import (
+    GetChapterArgs,
+    get_chapter_content,
 )
 
 
 def run_teacher_agent(topic_id):
-    agent = Teacher(topic_id)
+    agent = TeacherAgent(
+        topic_id=topic_id,
+        model=Constants.MODEL_NAME,
+        max_iteration=Constants.MAX_ITERATION,
+        temperature=Constants.MODEL_TEMPERATURE,
+    )
     agent.add_tool(
         get_chapter_content,
-        GetFileArgs,
+        GetChapterArgs,
         "Load chapter content by chapter sequence and topic id.",
     )
     agent.add_tool(

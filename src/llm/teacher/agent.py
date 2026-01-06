@@ -7,11 +7,17 @@ from src.llm.config import LLMConfig
 from src.llm.constant import Constants
 
 
-class Teacher:
-    def __init__(self, curriculam_id,model=Constants.MODEL_NAME,temperature=Constants.MODEL_TEMPERATURE,max_iteration=Constants.MAX_ITERATION):
+class TeacherAgent:
+    def __init__(
+        self,
+        topic_id: int,
+        model: str = Constants.DEFAULT_MODEL_NAME,
+        temperature: float = Constants.DEFAULT_MODEL_TEMPERATURE,
+        max_iteration: int = Constants.DEFAULT_MAX_ITERATION,
+    ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.model = model
-        self.curriculam_id = curriculam_id
+        self.topic_id = topic_id
         self.tools = {}
         self.temperature = temperature
         self.max_iteration = max_iteration
@@ -33,7 +39,7 @@ class Teacher:
 
     def execute_tool(self, name, args):
         if name in {"get_user_curriculum", "get_chapter_content"}:
-            args["topic_id"] = self.curriculam_id
+            args["topic_id"] = self.topic_id
         return self.tools[name].execute(**args)
 
     def add_message(self, role, content):
@@ -49,9 +55,9 @@ class Teacher:
         return response
 
     def invoke(self):
-        step=0
-        while step<self.max_iteration:
-            step+=1
+        step = 0
+        while step < self.max_iteration:
+            step += 1
             response = self.llm_call()
             msg = response.output[0]
             # for msg in response.output:
