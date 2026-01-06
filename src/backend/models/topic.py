@@ -13,7 +13,6 @@ class Topic(BaseModel):
     )
     title = Column(String, nullable=False)
     status = Column(Enum(Status), nullable=False)
-
     user_summary = Column(Text, nullable=False)
 
     user = relationship("User", back_populates="topics")

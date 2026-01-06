@@ -14,7 +14,6 @@ class Chapter(BaseModel):
     title = Column(String, nullable=False)
     sequence = Column(Integer, nullable=False)
     status = Column(Enum(Status), nullable=False)
-
     outline = Column(Text, nullable=False)
 
     chapter_plan = relationship(
