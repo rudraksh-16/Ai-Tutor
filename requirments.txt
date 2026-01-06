@@ -1,5 +1,7 @@
-* Backend
+# Backend
 SQLAlchemy==2.0.45
 python-dotenv==1.2.1
 psycopg2==2.9.11
 
+# LLM
+openai==2.14.0
