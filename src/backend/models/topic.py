@@ -12,8 +12,8 @@ class Topic(BaseModel):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     title = Column(String, nullable=False)
-    status = Column(Enum(Status),nullable=False)
-    
+    status = Column(Enum(Status), nullable=False)
+
     user_summary = Column(Text, nullable=False)
 
     user = relationship("User", back_populates="topics")
