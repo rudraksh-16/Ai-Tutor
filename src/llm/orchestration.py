@@ -1,10 +1,10 @@
-from src.llm.teacher.agent import TeacherAgent
-from src.llm.constant import Constants
-from src.llm.teacher.tools.get_user_curriculum import (
+from src.llm.teacher_agent.agent import TeacherAgent
+from src.llm.teacher_agent.constant import Constants
+from src.llm.teacher_agent.tools.get_user_curriculum import (
     get_user_curriculum,
     GetUserCurriculumArgs,
 )
-from src.llm.teacher.tools.get_chapter_content import (
+from src.llm.teacher_agent.tools.get_chapter_content import (
     GetChapterArgs,
     get_chapter_content,
 )

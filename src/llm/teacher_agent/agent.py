@@ -1,10 +1,10 @@
 import json
 from openai import OpenAI
 
-from src.llm.teacher.tools.tool_class import Tool
-from src.llm.teacher.prompt import SYSTEM_PROMPT
+from src.llm.teacher_agent.tools.tool_class import Tool
+from src.llm.teacher_agent.prompt import SYSTEM_PROMPT
 from src.llm.config import LLMConfig
-from src.llm.constant import Constants
+from src.llm.teacher_agent.constant import Constants
 
 
 class TeacherAgent:

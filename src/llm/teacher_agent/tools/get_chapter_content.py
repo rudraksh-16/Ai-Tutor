@@ -1,7 +1,7 @@
 from src.backend.db.database import SessionLocal
 from src.backend.models.chapter import Chapter
 from src.backend.models.chapter_plan import ChapterPlan
-from src.llm.teacher.tools.args_schema import Args
+from src.llm.teacher_agent.tools.args_schema import Args
 
 
 class GetChapterArgs:
