@@ -1,8 +1,8 @@
 from src.llm.teacher.agent import Teacher
 from src.llm.teacher.tools.tools import (
-    load_chapter_content,
+    get_chapter_content,
     get_user_curriculum,
-    LoadFileArgs,
+    GetFileArgs,
     GetUserCurriculumArgs,
 )
 
@@ -10,8 +10,8 @@ from src.llm.teacher.tools.tools import (
 def run_teacher_agent(topic_id):
     agent = Teacher(topic_id)
     agent.add_tool(
-        load_chapter_content,
-        LoadFileArgs,
+        get_chapter_content,
+        GetFileArgs,
         "Load chapter content by chapter sequence and topic id.",
     )
     agent.add_tool(

@@ -6,13 +6,13 @@ from src.llm.teacher.prompt import SYSTEM_PROMPT
 
 
 class Teacher:
-    def __init__(self, curriculam_id,model="gpt-4.1-mini",temperature=0.5):
+    def __init__(self, curriculam_id,model="gpt-4.1-mini",temperature=0.5,max_iteration=8):
         self.client = OpenAI()
         self.model = model
         self.curriculam_id = curriculam_id
         self.tools = {}
         self.temperature = temperature
-        self.max_iteration = 8
+        self.max_iteration = max_iteration
         self.chat_history = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
@@ -30,7 +30,7 @@ class Teacher:
         self.tools[tool.name] = tool
 
     def execute_tool(self, name, args):
-        if name in {"get_user_curriculum", "load_chapter_content"}:
+        if name in {"get_user_curriculum", "get_chapter_content"}:
             args["topic_id"] = self.curriculam_id
         return self.tools[name].execute(**args)
 

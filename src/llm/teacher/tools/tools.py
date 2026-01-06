@@ -6,7 +6,7 @@ from src.llm.utils.helper import chapter_to_dict
 from src.llm.teacher.tools.args_schema import Args
 
 
-class LoadFileArgs:
+class GetFileArgs:
     args = [
         (
             "sequence",
@@ -16,7 +16,7 @@ class LoadFileArgs:
     ]
 
 
-def load_chapter_content(sequence: int, topic_id: int) -> str:
+def get_chapter_content(sequence: int, topic_id: int) -> str:
     """Load chapter content by chapter sequence and topic id."""
     db = SessionLocal()
     try:

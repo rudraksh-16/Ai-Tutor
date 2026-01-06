@@ -6,7 +6,7 @@ SYSTEM_PROMPT = """
 
     You have access to these tools:
 
-    - load_chapter_content: Load the document content.
+    - get_chapter_content: Load the document content.
     - get_user_detail: Use this tool to retrieve user curriculum at the beginning of the chat.
 
     Rules:
