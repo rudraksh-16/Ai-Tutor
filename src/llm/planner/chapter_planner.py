@@ -3,8 +3,7 @@ from uuid import UUID
 
 from src.llm.planner.constant import PlannerConstants
 from src.llm.config import LLMConfig
-from src.llm.planner.prompts.system_prompt import SYSTEM_PROMPT
-from src.llm.planner.prompts.user_prompt import USER_PROMPT
+from src.llm.planner.prompt import SYSTEM_PROMPT, USER_PROMPT
 from src.backend.db.database import SessionLocal
 from src.backend.models.topic import Topic
 from src.backend.models.chapter import Chapter
