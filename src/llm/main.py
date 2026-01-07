@@ -113,5 +113,6 @@ def run_planner(TOPIC_ID: str):
         topic_id=TOPIC_ID,
         temperature=PlannerConstants.TEMPERATURE,
         model=PlannerConstants.MODEL,
+        max_retries=PlannerConstants.MAX_RETRIES,
     )
     plan.invoke()

@@ -3,7 +3,8 @@ from uuid import UUID
 
 from src.llm.planner.constant import PlannerConstants
 from src.llm.config import LLMConfig
-from src.llm.planner.prompt import SYSTEM_PROMPT
+from src.llm.planner.prompts.system_prompt import SYSTEM_PROMPT
+from src.llm.planner.prompts.user_prompt import USER_PROMPT
 from src.backend.db.database import SessionLocal
 from src.backend.models.topic import Topic
 from src.backend.models.chapter import Chapter
@@ -22,42 +23,13 @@ class Planner:
         self.topic_id = topic_id
         self.model = model
         self.temperature = temperature
-        self.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
         self.max_retries = max_retries
 
-    def _call_llm(self) -> str:
-        print(self.messages)
+    def _call_llm(self, messages) -> str:
         response = self.client.responses.create(
-            model=self.model, input=self.messages, temperature=self.temperature
+            model=self.model, input=messages, temperature=self.temperature
         )
         return response.output_text
-
-    @staticmethod
-    def build_prompt(
-        topic_title: str,
-        current_chapter_title: str,
-        chapter_outline: str,
-        user_summary: str,
-        all_chapters: str,
-    ):
-        return f"""
-            Topic:
-            {topic_title}
-
-            Learner profile:
-            {user_summary}
-
-            Full curriculum chapters (in order):
-            {all_chapters}
-
-            Current chapter:
-            {current_chapter_title}
-
-            Chapter outline:
-            {chapter_outline}
-
-            Please generate a detailed teaching plan for the current chapter.
-            """
 
     @staticmethod
     def get_chapters(db, topic_id: str):
@@ -77,16 +49,16 @@ class Planner:
         )
 
     @staticmethod
-    def save_plan(db, id: str, plan: str):
-        id = UUID(id)
+    def save_plan(db, chapter_id: str, plan: str):
+        chapter_id = UUID(chapter_id)
         try:
             existing_plan = (
-                db.query(ChapterPlan).filter(ChapterPlan.chapter_id == id).first()
+                db.query(ChapterPlan).filter(ChapterPlan.chapter_id == chapter_id).first()
             )
             if existing_plan:
-                print(f"plan for chapter id {id} already exists")
+                print(f"plan for chapter id {chapter_id} already exists")
             else:
-                db.add(ChapterPlan(chapter_id=id, content=plan))
+                db.add(ChapterPlan(chapter_id=chapter_id, content=plan))
                 db.commit()
             return {
                 "status": "success",
@@ -116,13 +88,14 @@ class Planner:
 
             while retry_count <= self.max_retries:
                 for ch in chapters:
+                    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
                     if ch.chapter_id in saved_chapter_ids:
                         continue
 
-                    self.messages.append(
+                    messages.append(
                         {
                             "role": "user",
-                            "content": self.build_prompt(
+                            "content": USER_PROMPT.format(
                                 topic_title=ch.topic_title,
                                 current_chapter_title=ch.chapter_title,
                                 chapter_outline=ch.outline,
@@ -132,8 +105,8 @@ class Planner:
                         }
                     )
 
-                    content = self._call_llm()
-                    result = self.save_plan(db, ch.chapter_id, content)
+                    content = self._call_llm(messages)
+                    result = self.save_plan(db, str(ch.chapter_id), content)
 
                     if result["status"] in {"success", "already_exists"}:
                         saved_chapter_ids.add(ch.chapter_id)
