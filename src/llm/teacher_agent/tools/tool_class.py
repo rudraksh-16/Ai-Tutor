@@ -42,5 +42,4 @@ class Tool:
             float: "number",
             str: "string",
             bool: "boolean",
-            UUID: "string",
         }.get(py_type, "string")

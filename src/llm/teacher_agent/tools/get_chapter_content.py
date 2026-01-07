@@ -11,13 +11,14 @@ class GetChapterArgs:
             "sequence",
             Args(type=int, description="Chapter sequence number", required=True),
         ),
-        ("topic_id", Args(type=UUID, description="ID of the topic", required=True)),
+        ("topic_id", Args(type=str, description="ID of the topic", required=True)),
     ]
 
 
-def get_chapter_content(sequence: int, topic_id: UUID) -> str:
+def get_chapter_content(sequence: int, topic_id: str) -> str:
     """Load chapter content by chapter sequence and topic id."""
     db = SessionLocal()
+    topic_id = UUID(topic_id)
     try:
         result = (
             db.query(ChapterPlan.content)

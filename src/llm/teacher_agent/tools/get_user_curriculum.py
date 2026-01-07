@@ -8,13 +8,14 @@ from uuid import UUID
 
 class GetUserCurriculumArgs:
     args = [
-        ("topic_id", Args(type=UUID, description="UUID ID of the topic", required=True))
+        ("topic_id", Args(type=str, description="UUID ID of the topic", required=True))
     ]
 
 
-def get_user_curriculum(topic_id: UUID) -> dict:
+def get_user_curriculum(topic_id: str) -> dict:
     """Get curriculum plan by topic id."""
     db = SessionLocal()
+    topic_id = UUID(topic_id)
     try:
         data = (
             db.query(

@@ -1,6 +1,5 @@
 import json
 from openai import OpenAI
-from uuid import UUID
 
 from src.llm.teacher_agent.tools.tool_class import Tool
 from src.llm.teacher_agent.prompt import SYSTEM_PROMPT
@@ -11,7 +10,7 @@ from src.llm.teacher_agent.constant import TeacherConstants
 class TeacherAgent:
     def __init__(
         self,
-        topic_id: UUID,
+        topic_id: str,
         model: str = TeacherConstants.DEFAULT_MODEL_NAME,
         temperature: float = TeacherConstants.DEFAULT_MODEL_TEMPERATURE,
         max_iteration: int = TeacherConstants.DEFAULT_MAX_ITERATION,
