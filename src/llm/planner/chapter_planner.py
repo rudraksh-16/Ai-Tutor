@@ -22,9 +22,9 @@ class Planner:
         self.temperature = temperature
         self.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-    def _call_llm(self, build_prompt: str) -> str:
+    def _call_llm(self, prompt: str) -> str:
         response = self.client.responses.create(
-            model=self.model, input=build_prompt, temperature=self.temperature
+            model=self.model, input=prompt, temperature=self.temperature
         )
         return response.output_text
 
