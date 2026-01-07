@@ -1,19 +1,20 @@
 import json
 from openai import OpenAI
+from uuid import UUID
 
 from src.llm.teacher_agent.tools.tool_class import Tool
 from src.llm.teacher_agent.prompt import SYSTEM_PROMPT
 from src.llm.config import LLMConfig
-from src.llm.teacher_agent.constant import Constants
+from src.llm.teacher_agent.constant import TeacherConstants
 
 
 class TeacherAgent:
     def __init__(
         self,
-        topic_id: int,
-        model: str = Constants.DEFAULT_MODEL_NAME,
-        temperature: float = Constants.DEFAULT_MODEL_TEMPERATURE,
-        max_iteration: int = Constants.DEFAULT_MAX_ITERATION,
+        topic_id: UUID,
+        model: str = TeacherConstants.DEFAULT_MODEL_NAME,
+        temperature: float = TeacherConstants.DEFAULT_MODEL_TEMPERATURE,
+        max_iteration: int = TeacherConstants.DEFAULT_MAX_ITERATION,
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.model = model
