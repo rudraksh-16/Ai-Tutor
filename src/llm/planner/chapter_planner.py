@@ -1,4 +1,5 @@
 from openai import OpenAI
+from uuid import UUID
 
 from src.llm.planner.constant import PlannerConstants
 from src.llm.config import LLMConfig
@@ -66,8 +67,8 @@ class Planner:
                 Topic.title.label("topic_title"),
                 Topic.user_summary.label("user_summary"),
             )
-            .join(Topic, Chapter.topic_id == Topic.id)
-            .filter(Topic.id == topic_id)
+            .join(Topic, Chapter.topic_id == UUID(Topic.id))
+            .filter(Topic.id == UUID(topic_id))
             .order_by(Chapter.sequence)
             .all()
         )
@@ -76,12 +77,12 @@ class Planner:
     def save_plan(db, id: str, plan: str):
         try:
             existing_plan = (
-                db.query(ChapterPlan).filter(ChapterPlan.chapter_id == id).first()
+                db.query(ChapterPlan).filter(ChapterPlan.chapter_id == UUID(id)).first()
             )
             if existing_plan:
                 print(f"plan for chapter id {id} already exists")
             else:
-                db.add(ChapterPlan(chapter_id=id, content=plan))
+                db.add(ChapterPlan(chapter_id=UUID(id), content=plan))
                 db.commit()
             return {
                 "status": "success",
@@ -94,9 +95,7 @@ class Planner:
     def invoke(self):
         db = SessionLocal()
         chapters = self.get_chapters(db, self.topic_id)
-        print(chapters)
         user_summary = chapters[0].user_summary
-        print(user_summary)
         try:
             for ch in chapters:
                 self.messages.append(
@@ -111,7 +110,6 @@ class Planner:
                         ),
                     }
                 )
-                # prompt = self.messages
                 content = self._call_llm()
                 self.save_plan(db, ch.chapter_id, content)
         except:
