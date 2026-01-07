@@ -9,7 +9,9 @@ class ChapterPlan(BaseModel):
     __tablename__ = "chapter_plans"
 
     chapter_id = Column(
-        UUID(as_uuid=True), ForeignKey("chapters.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("chapters.id", ondelete="CASCADE"),
+        nullable=False,
     )
     content = Column(Text, nullable=False)
 
