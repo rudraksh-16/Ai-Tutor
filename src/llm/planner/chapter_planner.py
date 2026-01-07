@@ -22,9 +22,10 @@ class Planner:
         self.temperature = temperature
         self.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-    def _call_llm(self, prompt: str) -> str:
+    def _call_llm(self) -> str:
+        print(self.messages)
         response = self.client.responses.create(
-            model=self.model, input=prompt, temperature=self.temperature
+            model=self.model, input=self.messages, temperature=self.temperature
         )
         return response.output_text
 
@@ -110,8 +111,8 @@ class Planner:
                         ),
                     }
                 )
-                prompt = self.messages
-                content = self._call_llm(prompt)
+                # prompt = self.messages
+                content = self._call_llm()
                 self.save_plan(db, ch.chapter_id, content)
         except:
             db.rollback()
