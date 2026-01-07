@@ -1,3 +1,6 @@
+from uuid import UUID
+
+
 class Tool:
     def __init__(self, func, args_class, description):
         self.func = func
@@ -34,6 +37,10 @@ class Tool:
 
     @staticmethod
     def _map_type(py_type):
-        return {int: "integer", float: "number", str: "string", bool: "boolean"}.get(
-            py_type, "string"
-        )
+        return {
+            int: "integer",
+            float: "number",
+            str: "string",
+            bool: "boolean",
+            UUID: "string",
+        }.get(py_type, "string")

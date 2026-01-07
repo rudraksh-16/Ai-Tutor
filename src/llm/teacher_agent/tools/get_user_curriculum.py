@@ -3,13 +3,16 @@ from src.backend.models.chapter import Chapter
 from src.backend.models.topic import Topic
 from src.llm.teacher_agent.utils.helper import chapter_to_dict
 from src.llm.teacher_agent.tools.args_schema import Args
+from uuid import UUID
 
 
 class GetUserCurriculumArgs:
-    args = [("topic_id", Args(type=int, description="ID of the topic", required=True))]
+    args = [
+        ("topic_id", Args(type=UUID, description="UUID ID of the topic", required=True))
+    ]
 
 
-def get_user_curriculum(topic_id: int) -> dict:
+def get_user_curriculum(topic_id: UUID) -> dict:
     """Get curriculum plan by topic id."""
     db = SessionLocal()
     try:
