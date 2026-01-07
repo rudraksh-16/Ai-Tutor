@@ -14,7 +14,7 @@ class Planner:
         self,
         topic_id: str,
         model: str = PlannerConstants.DEFAULT_MODEL,
-        temperature: str = PlannerConstants.DEFAULT_TEMPERATURE,
+        temperature: float = PlannerConstants.DEFAULT_TEMPERATURE,
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.topic_id = topic_id
