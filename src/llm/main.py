@@ -108,8 +108,7 @@ def run_teacher_agent(topic_id):
         agent.add_message("user", user_input)
 
 
-def run_planner():
-    TOPIC_ID = "fffda8e8-a223-4056-a934-cd5f1941bd1f"
+def run_planner(TOPIC_ID: str):
     plan = Planner(
         topic_id=TOPIC_ID,
         temperature=PlannerConstants.TEMPERATURE,
