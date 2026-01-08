@@ -22,79 +22,78 @@ class CurriculumAgent:
         self.model = model
         self.temperature = temperature
         self.tools = {}
-        self.chat_history = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-        ]
         self.max_iteration = max_iteration
 
         self.saved_chapters = set()
         self.save_failures = 0
-
-    def add_chat(self, role: str, content: str):
-        self.chat_history.append({"role": role, "content": content})
 
     def add_tool(self, func, args_class, description: str = None):
         tool = ToolRegistry(func, args_class, description)
         self.tools[tool.name] = tool
 
     def execute_tool(self, name: str, args: dict):
-        args["user_id"] = self.user_id
-        args["topic_id"] = self.topic_id
+        tool = self.tools[name]
+        arg_names = {arg_name for arg_name, _ in tool.args_schema.args}
+        print(arg_names)
+
+        if "user_id" in arg_names:
+          args["user_id"] = self.user_id
+
+        if "topic_id" in arg_names:
+            args["topic_id"] = self.topic_id
+
 
         return self.tools[name].execute(**args)
 
-    def _call_llm(self):
+    def _call_llm(self, chat_history):
         return self.client.responses.create(
             model=self.model,
-            input=self.chat_history,
+            input=chat_history,
             temperature=self.temperature,
             tools=[t.schema() for t in self.tools.values()],
             tool_choice="auto",
         )
 
-    def invoke(self):
-        max_iteration = self.max_iteration
+    def invoke(self, chat_history: list):
         step = 0
+        tool_call=[]
 
-        while step < max_iteration:
-
+        while step < self.max_iteration:
             step += 1
-            response = self._call_llm()
-
+            response = self._call_llm(chat_history)
+            print(f"{step}")
             assistant_text = ""
-            print(response.output)
+
             for item in response.output:
                 if item.type == "function_call":
                     tool_name = item.name
                     args = json.loads(item.arguments)
 
-                    self.chat_history.append(
-                        {
-                            "type": "function_call",
-                            "name": tool_name,
-                            "arguments": json.dumps(args),
-                            "call_id": item.id,
-                        }
-                    )
+                    tool_call.append({
+                        "type": "function_call",
+                        "name": tool_name,
+                        "arguments": json.dumps(args),
+                        "call_id": item.call_id,
+                    })
 
-                    result = self.execute_tool(item.name, args)
+                    result = self.execute_tool(tool_name, args)
 
-                    self.chat_history.append(
-                        {
-                            "type": "function_call_output",
-                            "call_id": item.id,
-                            "output": json.dumps(result),
-                        }
-                    )
+                    tool_call.append({
+                        "type": "function_call_output",
+                        "call_id": item.call_id,
+                        "output": json.dumps(result),
+                    })
+
+                    for message in tool_call:
+                        chat_history.append(message)
 
                     if tool_name == "upsert_curriculum":
-
                         if result.get("status") == "success":
                             self.saved_chapters.add(args.get("chapter_number"))
                             self.save_failures = 0
-
                         else:
                             self.save_failures += 1
+
                 elif item.type == "message":
                     for part in item.content:
                         if part.type == "output_text":
@@ -103,8 +102,7 @@ class CurriculumAgent:
             if self.save_failures > 1:
                 return "Apologies, there was an issue saving your curriculum."
 
-            if assistant_text and step <= max_iteration:
-                self.add_chat("assistant", assistant_text)
-                return assistant_text
+            if assistant_text:
+                return assistant_text, tool_call
 
-        return "Something went wrong. Please try again."
+        return "Something went wrong. Please try again.", tool_call

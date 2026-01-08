@@ -1,3 +1,5 @@
+import json
+
 from src.llm.curriculum_agent.agent import CurriculumAgent
 from src.llm.teacher_agent.agent import TeacherAgent
 from src.llm.teacher_agent.constant import TeacherConstants
@@ -23,7 +25,7 @@ from src.llm.planner.chapter_planner import Planner
 from src.llm.planner.constant import PlannerConstants
 
 
-def run_curriculum_agent(user_id: str, topic_id: str):
+def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list, user_input: str):
 
     agent = CurriculumAgent(
         user_id=user_id,
@@ -43,33 +45,11 @@ def run_curriculum_agent(user_id: str, topic_id: str):
         GetCurriculumArgs,
         description="Fetches the complete curriculum for a given topic from the database.",
     )
-    exists = topic_exists(topic_id)
 
-    if exists:
-        agent.add_chat(
-            "user",
-            "Hi. I already have an existing curriculum. I want to continue working with my current topic.",
-        )
+    ai_response, message = agent.invoke(chat_history)
 
-    else:
-        agent.add_chat(
-            "user", "Hi. I want to start creating a new learning curriculum."
-        )
+    return ai_response, message
 
-    ai_response = agent.invoke()
-    print("\nAI:", ai_response)
-
-    while True:
-        user_input = input("\n[You]: ").strip()
-
-        if user_input.lower() in {"exit", "quit", "bye"}:
-            print("\nAI: Goodbye!")
-            break
-
-        agent.add_chat("user", user_input)
-
-        ai_response = agent.invoke()
-        print("\nAI:", ai_response)
 
 
 def run_teacher_agent(topic_id):
