@@ -3,6 +3,7 @@ from uuid import UUID
 from src.backend.models.topic import Topic
 from src.backend.db.database import SessionLocal
 
+
 def topic_exists(topic_id) -> bool:
     try:
         topic_uuid = UUID(topic_id)

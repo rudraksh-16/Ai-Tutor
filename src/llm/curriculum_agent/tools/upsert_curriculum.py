@@ -61,7 +61,7 @@ def upsert_curriculum(
 
         else:
             new_topic = Topic(
-                id = topic_uuid,
+                id=topic_uuid,
                 user_id=user_uuid,
                 title=topic,
                 status=Status.PENDING.value,

@@ -5,6 +5,7 @@ from src.backend.models.chapter import Chapter
 from src.backend.db.database import SessionLocal
 from src.llm.curriculum_agent.tools.argument_spec import ArgumentSpec as Args
 
+
 class GetCurriculumArgs:
     args = [
         (
@@ -19,13 +20,15 @@ def get_curriculum(topic_id: str):
     try:
         topic_uuid = UUID(topic_id)
     except ValueError:
-        return {"status": "error", "message": "Invalid user_id or topic_id"}
+        return {"status": "error", "message": "Invalid topic_id"}
     try:
-        topic = (db.query(Topic)
-                 .filter(
-                     Topic.id == topic_uuid,
-                    )
-                    .first())
+        topic = (
+            db.query(Topic)
+            .filter(
+                Topic.id == topic_uuid,
+            )
+            .first()
+        )
 
         if not topic:
             return {"status": "error", "message": "Curriculum not found"}
@@ -50,9 +53,9 @@ def get_curriculum(topic_id: str):
                 for c in chapters
             ],
         }
-    
+
     except Exception as e:
-     return {"status": "error", "message": "Failed to fetch curriculum"}
+        return {"status": "error", "message": "Failed to fetch curriculum"}
 
     finally:
         db.close()
