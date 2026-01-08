@@ -17,10 +17,7 @@ class GetCurriculumArgs:
 
 def get_curriculum(topic_id: str):
     db = SessionLocal()
-    try:
-        topic_uuid = UUID(topic_id)
-    except ValueError:
-        return {"status": "error", "message": "Invalid topic_id"}
+    topic_uuid = UUID(topic_id)
     try:
         topic = (
             db.query(Topic)
