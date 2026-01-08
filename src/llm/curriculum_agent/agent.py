@@ -4,28 +4,26 @@ from openai import OpenAI
 from src.llm.config import LLMConfig
 from src.llm.curriculum_agent.prompt import SYSTEM_PROMPT
 from src.llm.curriculum_agent.tools.tool_registry import ToolRegistry
-from src.llm.curriculum_agent.constant import Constants
+from src.llm.curriculum_agent.constant import CurriculumConstants
 
 
 class CurriculumAgent:
     def __init__(
         self,
-        user_id: int,
-        model: str = Constants.DEFAULT_MODEL,
-        temperature: float = Constants.DEFAULT_TEMPERATURE,
-        max_iteration: int = Constants.DEFAULT_MAX_ITERATION
+        user_id: str,
+        topic_id: str = None,
+        model: str = CurriculumConstants.DEFAULT_MODEL,
+        temperature: float = CurriculumConstants.DEFAULT_TEMPERATURE,
+        max_iteration: int = CurriculumConstants.DEFAULT_MAX_ITERATION,
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.user_id = user_id
+        self.topic_id = topic_id
         self.model = model
         self.temperature = temperature
         self.tools = {}
         self.chat_history = [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {
-                "role": "system",
-                "content": "Ask the user if they would like to create a new curriculum or manage an existing one in a single sentence.",
-            },
         ]
         self.max_iteration = max_iteration
 
@@ -43,6 +41,7 @@ class CurriculumAgent:
 
     def execute_tool(self, name: str, args: dict):
         args["user_id"] = self.user_id
+        args["topic_id"] = self.topic_id
 
         if name == "save_curriculum" and self.curriculum_saved:
             return {"status": "ignored", "reason": "already_saved"}
@@ -68,7 +67,6 @@ class CurriculumAgent:
             response = self._call_llm()
 
             assistant_text = ""
-            # tool_calls = []
             print(response.output)
             for item in response.output:
                 if item.type == "function_call":

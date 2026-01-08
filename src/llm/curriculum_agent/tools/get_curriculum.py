@@ -1,46 +1,28 @@
+from uuid import UUID
+
 from src.backend.models.topic import Topic
 from src.backend.models.chapter import Chapter
 from src.backend.db.database import SessionLocal
-from src.llm.curriculum_agent.tools.argument_spec import ArgumentSpec as Args
 
 
-def get_topics(user_id: int):
+def get_curriculum(user_id: str, topic_id: str):
     db = SessionLocal()
+    topic_uuid = UUID(topic_id)
+    user_uuid = UUID(user_id)
     try:
-        topics = db.query(Topic.title).filter(Topic.user_id == user_id).all()
-        return topics
-    finally:
-        db.close()
-
-
-class GetCurriculumArgs:
-    args = [
-        ("user_id", Args(type=int, description="The ID of the user", required=True)),
-        (
-            "topic_title",
-            Args(type=str, description="The title of the topic", required=True),
-        ),
-    ]
-
-
-def get_curriculum(user_id: int, topic_title: str):
-    """
-    Fetches the complete curriculum for a given topic from the database.
-    """
-    db = SessionLocal()
-    try:
-        topic = (
-            db.query(Topic)
-            .filter(Topic.user_id == user_id, Topic.title == topic_title)
-            .first()
-        )
+        topic = (db.query(Topic)
+                 .filter(
+                     Topic.id == topic_uuid,
+                     Topic.user_id == user_uuid
+                    )
+                    .first())
 
         if not topic:
             return {"status": "error", "message": "Curriculum not found"}
 
         chapters = (
             db.query(Chapter)
-            .filter(Chapter.topic_id == topic.id)
+            .filter(Chapter.topic_id == topic_uuid)
             .order_by(Chapter.sequence)
             .all()
         )
