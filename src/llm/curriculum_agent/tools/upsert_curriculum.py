@@ -10,7 +10,7 @@ from src.backend.enums.status import Status
 class UpsertCurriculumArgs:
     args = [
         ("user_id", Args(type=str, description="The ID of the user", required=True)),
-        ("topic_id", Args(type=str, description="The ID of the topic", required=False)),
+        ("topic_id", Args(type=str, description="The ID of the topic", required=True)),
         ("topic", Args(type=str, description="The title of topic", required=True)),
         (
             "chapter_number",
@@ -34,7 +34,7 @@ class UpsertCurriculumArgs:
 
 def upsert_curriculum(
     user_id: str,
-    topic_id: str | None,
+    topic_id: str,
     topic: str,
     chapter_number: int,
     chapter_title: str,
@@ -49,30 +49,25 @@ def upsert_curriculum(
     """
     db = SessionLocal()
     user_uuid = UUID(user_id)
+    topic_uuid = UUID(topic_id)
     try:
-        if topic_id:
-            topic_uuid = UUID(topic_id)
-
-        elif topic:
-            topic_uuid = (
-                db.query(Topic.id)
-                .filter(Topic.title == topic, Topic.user_id == user_uuid)
-                .scalar()
-            )
-
-            if topic_uuid is None:
-                new_topic = Topic(
-                    user_id=user_uuid,
-                    title=topic,
-                    status=Status.PENDING.value,
-                    user_summary=user_summary,
-                )
-                db.add(new_topic)
-                db.flush()
-                topic_uuid = new_topic.id
+        existing_topic = (
+            db.query(Topic)
+            .filter(Topic.user_id == user_uuid, Topic.id == topic_uuid)
+            .first()
+        )
+        if existing_topic:
+            topic_uuid = existing_topic.id
 
         else:
-            raise ValueError("Either topic_id or topic must be provided")
+            new_topic = Topic(
+                id = topic_uuid,
+                user_id=user_uuid,
+                title=topic,
+                status=Status.PENDING.value,
+                user_summary=user_summary,
+            )
+            db.add(new_topic)
 
         existing_chapter = (
             db.query(Chapter)
@@ -106,7 +101,6 @@ def upsert_curriculum(
 
     except Exception as e:
         db.rollback()
-        print(f"Database Error: {e}")
         return {"status": "error", "reason": str(e)}
 
     finally:

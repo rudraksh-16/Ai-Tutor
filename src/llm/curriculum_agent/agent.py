@@ -11,7 +11,7 @@ class CurriculumAgent:
     def __init__(
         self,
         user_id: str,
-        topic_id: str = None,
+        topic_id: str,
         model: str = CurriculumConstants.DEFAULT_MODEL,
         temperature: float = CurriculumConstants.DEFAULT_TEMPERATURE,
         max_iteration: int = CurriculumConstants.DEFAULT_MAX_ITERATION,
@@ -30,8 +30,6 @@ class CurriculumAgent:
         self.saved_chapters = set()
         self.save_failures = 0
 
-        self.curriculum_saved = False
-
     def add_chat(self, role: str, content: str):
         self.chat_history.append({"role": role, "content": content})
 
@@ -42,9 +40,6 @@ class CurriculumAgent:
     def execute_tool(self, name: str, args: dict):
         args["user_id"] = self.user_id
         args["topic_id"] = self.topic_id
-
-        if name == "save_curriculum" and self.curriculum_saved:
-            return {"status": "ignored", "reason": "already_saved"}
 
         return self.tools[name].execute(**args)
 
@@ -92,11 +87,12 @@ class CurriculumAgent:
                         }
                     )
 
-                    if tool_name == "save_curriculum":
+                    if tool_name == "upsert_curriculum":
 
                         if result.get("status") == "success":
                             self.saved_chapters.add(args.get("chapter_number"))
                             self.save_failures = 0
+
                         else:
                             self.save_failures += 1
                 elif item.type == "message":

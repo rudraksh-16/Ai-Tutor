@@ -6,7 +6,11 @@ from src.llm.curriculum_agent.tools.upsert_curriculum import (
     upsert_curriculum,
     UpsertCurriculumArgs,
 )
-from src.llm.curriculum_agent.tools.get_curriculum import get_curriculum
+from src.llm.curriculum_agent.tools.get_curriculum import (
+    get_curriculum,
+    GetCurriculumArgs,
+)
+from src.llm.curriculum_agent.topic_exists import topic_exists
 from src.llm.teacher_agent.tools.get_user_curriculum import (
     get_user_curriculum,
     GetUserCurriculumArgs,
@@ -19,7 +23,7 @@ from src.llm.planner.chapter_planner import Planner
 from src.llm.planner.constant import PlannerConstants
 
 
-def run_curriculum_agent(user_id: str, topic_id: str = None):
+def run_curriculum_agent(user_id: str, topic_id: str):
 
     agent = CurriculumAgent(
         user_id=user_id,
@@ -34,16 +38,14 @@ def run_curriculum_agent(user_id: str, topic_id: str = None):
         description="This tool is responsible for both: saving a newly generated curriculum and updating an existing curriculum -> based on the provided input.",
     )
 
-    if topic_id:
-        curriculum = get_curriculum(user_id, topic_id)
-        agent.add_chat(
-            "assistant",
-            f"""
-            We are continuing work on an existing curriculum.
-            Current curriculum summary:
-            {curriculum}
-            """,
-        )
+    agent.add_tool(
+        get_curriculum,
+        GetCurriculumArgs,
+        description="Fetches the complete curriculum for a given topic from the database.",
+    )
+    exists = topic_exists(topic_id)
+
+    if exists:
         agent.add_chat(
             "user",
             "Hi. I already have an existing curriculum. I want to continue working with my current topic.",
@@ -101,9 +103,9 @@ def run_teacher_agent(topic_id):
         agent.add_message("user", user_input)
 
 
-def run_planner(TOPIC_ID: str):
+def run_planner(topic_id: str):
     plan = Planner(
-        topic_id=TOPIC_ID,
+        topic_id=topic_id,
         temperature=PlannerConstants.TEMPERATURE,
         model=PlannerConstants.MODEL,
         max_retries=PlannerConstants.MAX_RETRIES,
