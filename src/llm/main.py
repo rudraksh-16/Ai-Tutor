@@ -4,16 +4,16 @@ from src.llm.teacher_agent.constant import TeacherConstants
 from src.llm.curriculum_agent.constant import CurriculumConstants
 from src.llm.curriculum_agent.tools.save_curriculum import (
     save_curriculum,
-    SaveCurriculumArgs
+    SaveCurriculumArgs,
 )
 from src.llm.curriculum_agent.tools.get_curriculum import (
     get_topics,
     get_curriculum,
-    GetCurriculumArgs
+    GetCurriculumArgs,
 )
 from src.llm.curriculum_agent.tools.edit_curriculum import (
     edit_curriculum,
-    EditCurriculumArgs
+    EditCurriculumArgs,
 )
 from src.llm.teacher_agent.tools.get_user_curriculum import (
     get_user_curriculum,
@@ -27,16 +27,14 @@ from src.llm.planner.chapter_planner import Planner
 from src.llm.planner.constant import PlannerConstants
 
 
-
-
-def run_curriculum_agent(user_id: int)-> str:
+def run_curriculum_agent(user_id: int) -> str:
 
     agent = CurriculumAgent(
-        user_id=user_id, 
-        model=CurriculumConstants.MODEL, 
-        temperature=CurriculumConstants.TEMPERATURE, 
-        max_iteration=CurriculumConstants.MAX_ITERATION
-        )
+        user_id=user_id,
+        model=CurriculumConstants.MODEL,
+        temperature=CurriculumConstants.TEMPERATURE,
+        max_iteration=CurriculumConstants.MAX_ITERATION,
+    )
     agent.add_tool(
         save_curriculum,
         SaveCurriculumArgs,
@@ -66,7 +64,7 @@ def run_curriculum_agent(user_id: int)-> str:
     while True:
         user_input = input("\n[You]: ").strip()
 
-        if user_input.lower() in {"exit", "quit", "bye"}:  
+        if user_input.lower() in {"exit", "quit", "bye"}:
             print("\nAI: Goodbye!")
             break
 
@@ -77,7 +75,8 @@ def run_curriculum_agent(user_id: int)-> str:
 
     return agent.current_topic_title
 
-def run_teacher_agent(topic_id):
+
+def run_teacher_agent(topic_id, chat_history):
     agent = TeacherAgent(
         topic_id=topic_id,
         model=TeacherConstants.MODEL_NAME,
@@ -93,19 +92,8 @@ def run_teacher_agent(topic_id):
         get_user_curriculum, GetUserCurriculumArgs, "Get curriculum plan by topic id."
     )
 
-    while True:
-        assistant_text = agent.invoke()
-
-        print("\n[Teacher]", assistant_text)
-
-        agent.add_message("assistant", assistant_text)
-        user_input = input("\n[Your Response]: ")
-
-        if user_input.lower() in {"quit", "exit", "bye"}:
-            print("Goodbye!")
-            break
-
-        agent.add_message("user", user_input)
+    assistant_text, message = agent.invoke(chat_history)
+    return assistant_text, message
 
 
 def run_planner(TOPIC_ID: str):
