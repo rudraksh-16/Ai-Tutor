@@ -22,7 +22,7 @@ def load_chat_history(user_id: str, topic_id: str) -> list:
             data = json.load(f)
     return data
 
-def save_response_json(user_id: str, topic_id: str, new_item):
+def append_response_json(user_id: str, topic_id: str, new_item):
     print("called save")
     chat_file = _get_chat_file_path(user_id, topic_id)
     if not os.path.exists(chat_file):
@@ -39,3 +39,10 @@ def save_response_json(user_id: str, topic_id: str, new_item):
         data.append(new_item)
     with open(chat_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, default=str)
+
+def extract(tool_results):
+    result = []
+    for tool in tool_results:
+        result.append(tool["input"])
+        result.append(tool["output"])
+    return result

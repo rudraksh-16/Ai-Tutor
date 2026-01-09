@@ -53,8 +53,25 @@ class CurriculumAgent:
             tools=[t.schema() for t in self.tools.values()],
             tool_choice="auto",
         )
+    
+    def format_chat_history(self, chat_history: list) -> list:
+        if not chat_history:
+            system_msg = {
+                "role": "system",
+                "content": SYSTEM_PROMPT
+            }
+            chat_history.append(system_msg)
+
+            user_msg = {
+                "role": "user",
+                "content": "Hi. I want to start creating a new learning curriculum."
+            }
+            chat_history.append(user_msg)
+        return chat_history
+
 
     def invoke(self, chat_history: list):
+        chat_history = self.format_chat_history(chat_history)
         step = 0
         tool_call=[]
 
@@ -69,23 +86,23 @@ class CurriculumAgent:
                     tool_name = item.name
                     args = json.loads(item.arguments)
 
-                    tool_call.append({
+                    tool_input={
                         "type": "function_call",
                         "name": tool_name,
                         "arguments": json.dumps(args),
                         "call_id": item.call_id,
-                    })
+                    }
+                    chat_history.append(tool_input)
 
                     result = self.execute_tool(tool_name, args)
 
-                    tool_call.append({
+                    tool_output={
                         "type": "function_call_output",
                         "call_id": item.call_id,
                         "output": json.dumps(result),
-                    })
-
-                    for message in tool_call:
-                        chat_history.append(message)
+                    }
+                    tool_call.append({"input": tool_input, "output": tool_output})
+                    chat_history.append(tool_output)
 
                     if tool_name == "upsert_curriculum":
                         if result.get("status") == "success":
