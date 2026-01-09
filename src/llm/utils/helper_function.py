@@ -1,18 +1,16 @@
 import json
 import os
 
-BASE_DIR = "./src/llm/curriculum_agent/chat_history"
+BASE_DIR = "./chat_history"
 
 
 def _get_chat_file_path(user_id: str, topic_id: str) -> str:
-    print("called get")
     user_dir = os.path.join(BASE_DIR, user_id)
     os.makedirs(user_dir, exist_ok=True)
     return os.path.join(user_dir, f"{topic_id}.json")
 
 
 def load_chat_history(user_id: str, topic_id: str) -> list:
-    print("called load")
     chat_file = _get_chat_file_path(user_id, topic_id)
 
     if not os.path.exists(chat_file):
@@ -23,7 +21,6 @@ def load_chat_history(user_id: str, topic_id: str) -> list:
     return data
 
 def append_response_json(user_id: str, topic_id: str, new_item):
-    print("called save")
     chat_file = _get_chat_file_path(user_id, topic_id)
     if not os.path.exists(chat_file):
         data = []
