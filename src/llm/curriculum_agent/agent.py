@@ -68,8 +68,10 @@ class CurriculumAgent:
 
         return chat_history
 
+
     def invoke(self, chat_history: list):
         chat_history = self.format_chat_history(chat_history)
+        tool_call=[]
         step = 0
         tool_calls = []
 

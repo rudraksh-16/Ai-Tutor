@@ -1,5 +1,3 @@
-import json
-
 from src.llm.curriculum_agent.agent import CurriculumAgent
 from src.llm.teacher_agent.agent import TeacherAgent
 from src.llm.teacher_agent.constant import TeacherConstants
