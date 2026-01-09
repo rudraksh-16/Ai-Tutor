@@ -51,7 +51,6 @@ class CurriculumAgent:
             tools=[t.schema() for t in self.tools.values()],
             tool_choice="auto",
         )
-
     def format_chat_history(self, input: list) -> list:
         chat_history = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -67,7 +66,6 @@ class CurriculumAgent:
             chat_history.append(input)
 
         return chat_history
-
 
     def invoke(self, chat_history: list):
         chat_history = self.format_chat_history(chat_history)
