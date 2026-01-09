@@ -2,7 +2,6 @@ import json
 from openai import OpenAI
 
 from src.llm.teacher_agent.tools.tool_class import Tool
-from src.llm.teacher_agent.prompt import SYSTEM_PROMPT
 from src.llm.config import LLMConfig
 from src.llm.teacher_agent.constant import TeacherConstants
 
@@ -21,17 +20,6 @@ class TeacherAgent:
         self.tools = {}
         self.temperature = temperature
         self.max_iteration = max_iteration
-        self.chat_history = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {
-                "role": "system",
-                "content": "Call get_user_detail now to retrieve the curriculum before continuing.",
-            },
-            {
-                "role": "user",
-                "content": "Hello, I want to start a new learning journey.",
-            },
-        ]
 
     def add_tool(self, func, args_class, description):
         tool = Tool(func, args_class, description)
@@ -42,47 +30,54 @@ class TeacherAgent:
             args["topic_id"] = self.topic_id
         return self.tools[name].execute(**args)
 
-    def add_message(self, role, content):
-        self.chat_history.append({"role": role, "content": content})
-
-    def llm_call(self):
+    def llm_call(self, chat_history):
         response = self.client.responses.create(
             model=self.model,
             temperature=self.temperature,
             tools=[t.schema() for t in self.tools.values()],
-            input=self.chat_history,
+            input=chat_history,
         )
         return response
 
-    def invoke(self):
+    def invoke(self, chat_history):
         step = 0
+        tool_calls = []
+
         while step < self.max_iteration:
             step += 1
-            response = self.llm_call()
+
+            response = self.llm_call(chat_history)
+
             msg = response.output[0]
-            # for msg in response.output:
+            # print(msg)
             if msg.type == "function_call":
+
                 tool_name = msg.name
                 tool_arg = json.loads(msg.arguments)
-                self.chat_history.append(
+                tool_calls.append(
                     {
                         "type": "function_call",
                         "name": tool_name,
                         "arguments": json.dumps(tool_arg),
-                        "call_id": msg.id,
+                        "call_id": msg.call_id,
                     }
                 )
 
                 result = self.execute_tool(tool_name, tool_arg)
-                self.chat_history.append(
+
+                tool_calls.append(
                     {
                         "type": "function_call_output",
-                        "call_id": msg.id,
+                        "call_id": msg.call_id,
                         "output": json.dumps(result),
                     }
                 )
+                for message in tool_calls:
+                    chat_history.append(message)
 
             elif msg.type == "message":
                 for part in msg.content:
                     if part.type == "output_text":
-                        return part.text
+                        return part.text, tool_calls
+
+        return None, tool_calls
