@@ -2,7 +2,6 @@ from src.llm.curriculum_agent.agent import CurriculumAgent
 from src.llm.teacher_agent.agent import TeacherAgent
 from src.llm.teacher_agent.constant import TeacherConstants
 from src.llm.curriculum_agent.constant import CurriculumConstants
-
 from src.llm.curriculum_agent.tools.upsert_curriculum import (
     upsert_curriculum,
     UpsertCurriculumArgs,
@@ -49,7 +48,8 @@ def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
     return ai_response, tool_call
 
 
-def run_teacher_agent(topic_id, chat_history):
+
+def run_teacher_agent(topic_id):
     agent = TeacherAgent(
         topic_id=topic_id,
         model=TeacherConstants.MODEL_NAME,
@@ -65,8 +65,15 @@ def run_teacher_agent(topic_id, chat_history):
         get_user_curriculum, GetUserCurriculumArgs, "Get curriculum plan by topic id."
     )
 
-    assistant_text, tool_calls = agent.invoke(chat_history)
-    return assistant_text, tool_calls
+    while True:
+        assistant_text = agent.invoke()
+
+        print("\n[Teacher]", assistant_text)
+
+        agent.add_message("assistant", assistant_text)
+        user_input = input("\n[Your Response]: ")
+
+        agent.add_message("user", user_input)
 
 
 def run_planner(topic_id: str):

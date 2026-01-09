@@ -5,17 +5,19 @@ from src.llm.utils.helper_function import load_chat_history, append_response_jso
 
 def run_curriculum(user_id: str, topic_id: str):
     chat_history = load_chat_history(user_id, topic_id)
-
-    response, tool_call = run_curriculum_agent(
-        user_id=user_id,
-        topic_id=topic_id,
-        chat_history=chat_history
-    )
-    assistant_msg = {"role": "assistant", "content": response}
-    chat_history.append(assistant_msg)
-    append_response_json(user_id, topic_id, assistant_msg)
-    append_response_json(user_id, topic_id, extract(tool_call))
-    print(f"[AI]: {response}")
+    if chat_history:
+        pass
+    else:
+        response, tool_call = run_curriculum_agent(
+            user_id=user_id,
+            topic_id=topic_id,
+            chat_history=chat_history
+        )
+        assistant_msg = {"role": "assistant", "content": response}
+        chat_history.append(assistant_msg)
+        append_response_json(user_id, topic_id, assistant_msg)
+        append_response_json(user_id, topic_id, extract(tool_call))
+        print(f"[AI]: {response}")
 
     while True:
         if chat_history:
@@ -42,7 +44,7 @@ def run_curriculum(user_id: str, topic_id: str):
 
 def main():
     USER_ID = "0249cfc3-cce2-466e-9413-dc6db145ac5c"
-    TOPIC_ID = "7fd25465-488f-49ff-b009-8ea87514b3ba"
+    TOPIC_ID = "c71d9d54-39e1-43eb-8331-1560920c0474"
     # TOPIC_ID = str(uuid4())  # generate new topic_id when needed
     run_curriculum(USER_ID, TOPIC_ID)
 
