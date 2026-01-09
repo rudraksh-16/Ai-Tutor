@@ -207,4 +207,5 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+**/chat_history/
 **/chat_history.json
