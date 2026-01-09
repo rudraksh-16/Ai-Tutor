@@ -4,7 +4,7 @@ from src.llm.utils.load_file import load_json, append_response_json, extract
 
 def main():
     TOPIC_ID = "5c5f9b4c-7b9b-4c65-8dd1-52e9580406cd"
-    PATH = "src/llm/teacher_agent/chat_history/chat_history.json"
+    PATH = "chat_history/teacher_agent/chat_history.json"
     while True:
         chat_history = load_json(PATH)
         if chat_history:
