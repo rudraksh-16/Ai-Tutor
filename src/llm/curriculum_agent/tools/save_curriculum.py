@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from src.backend.models.topic import Topic
 from src.backend.models.chapter import Chapter
 from src.backend.db.database import SessionLocal
@@ -7,11 +5,10 @@ from src.llm.curriculum_agent.tools.argument_spec import ArgumentSpec as Args
 from src.backend.enums.status import Status
 
 
-class UpsertCurriculumArgs:
+class SaveCurriculumArgs:
     args = [
-        ("user_id", Args(type=str, description="The ID of the user", required=True)),
-        ("topic_id", Args(type=str, description="The ID of the topic", required=True)),
-        ("topic", Args(type=str, description="The title of topic", required=True)),
+        ("user_id", Args(type=int, description="The ID of the user", required=True)),
+        ("topic", Args(type=str, description="The curriculum topic", required=True)),
         (
             "chapter_number",
             Args(type=int, description="Chapter sequence number", required=True),
@@ -32,9 +29,8 @@ class UpsertCurriculumArgs:
     ]
 
 
-def upsert_curriculum(
-    user_id: str,
-    topic_id: str,
+def save_curriculum(
+    user_id: int,
     topic: str,
     chapter_number: int,
     chapter_title: str,
@@ -42,56 +38,49 @@ def upsert_curriculum(
     user_summary: str,
 ) -> dict:
     """
-    This tool is responsible for both:
-    - saving a newly generated curriculum
-    - updating an existing curriculum
-    based on the provided input.
+    Saves a generated curriculum after user confirmation to the database.
+
+    Args:
+        user_id (int): The ID of the user.
+        topic (str): The curriculum topic.
+        chapter_number (int): The chapter number.
+        chapter_title (str): The chapter title.
+        chapter_outline (str): The detailed chapter outline.
+        user_summary (str): The generated summary of the user's learning intent.
+
+    Returns:
+        dict: A dictionary with the status of the save operation.
     """
     db = SessionLocal()
-    user_uuid = UUID(user_id)
-    topic_uuid = UUID(topic_id)
     try:
         existing_topic = (
             db.query(Topic)
-            .filter(Topic.user_id == user_uuid, Topic.id == topic_uuid)
+            .filter(Topic.user_id == user_id, Topic.title == topic)
             .first()
         )
         if existing_topic:
-            topic_uuid = existing_topic.id
+            topic_id = existing_topic.id
 
         else:
             new_topic = Topic(
-                id=topic_uuid,
-                user_id=user_uuid,
+                user_id=user_id,
                 title=topic,
                 status=Status.PENDING.value,
                 user_summary=user_summary,
             )
             db.add(new_topic)
+            db.flush()
+            topic_id = new_topic.id
 
-        existing_chapter = (
-            db.query(Chapter)
-            .filter(
-                Chapter.topic_id == topic_uuid,
-                Chapter.sequence == chapter_number,
-            )
-            .first()
+        new_chapter = Chapter(
+            topic_id=topic_id,
+            title=chapter_title,
+            sequence=chapter_number,
+            status=Status.PENDING.value,
+            outline=chapter_outline,
         )
 
-        if existing_chapter:
-            existing_chapter.title = chapter_title
-            existing_chapter.outline = chapter_outline
-
-        else:
-            chapter = Chapter(
-                topic_id=topic_uuid,
-                title=chapter_title,
-                sequence=chapter_number,
-                status=Status.PENDING.value,
-                outline=chapter_outline,
-            )
-
-            db.add(chapter)
+        db.add(new_chapter)
         db.commit()
 
         return {
@@ -101,6 +90,7 @@ def upsert_curriculum(
 
     except Exception as e:
         db.rollback()
+        print(f"Database Error: {e}")
         return {"status": "error", "reason": str(e)}
 
     finally:

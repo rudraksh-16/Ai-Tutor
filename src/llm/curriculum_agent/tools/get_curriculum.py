@@ -1,29 +1,37 @@
-from uuid import UUID
-
 from src.backend.models.topic import Topic
 from src.backend.models.chapter import Chapter
 from src.backend.db.database import SessionLocal
 from src.llm.curriculum_agent.tools.argument_spec import ArgumentSpec as Args
 
 
+def get_topics(user_id: int):
+    db = SessionLocal()
+    try:
+        topics = db.query(Topic.title).filter(Topic.user_id == user_id).all()
+        return topics
+    finally:
+        db.close()
+
+
 class GetCurriculumArgs:
     args = [
+        ("user_id", Args(type=int, description="The ID of the user", required=True)),
         (
-            "topic_id",
-            Args(type=str, description="The ID of the topic", required=True),
+            "topic_title",
+            Args(type=str, description="The title of the topic", required=True),
         ),
     ]
 
 
-def get_curriculum(topic_id: str):
+def get_curriculum(user_id: int, topic_title: str):
+    """
+    Fetches the complete curriculum for a given topic from the database.
+    """
     db = SessionLocal()
-    topic_uuid = UUID(topic_id)
     try:
         topic = (
             db.query(Topic)
-            .filter(
-                Topic.id == topic_uuid,
-            )
+            .filter(Topic.user_id == user_id, Topic.title == topic_title)
             .first()
         )
 
@@ -32,7 +40,7 @@ def get_curriculum(topic_id: str):
 
         chapters = (
             db.query(Chapter)
-            .filter(Chapter.topic_id == topic_uuid)
+            .filter(Chapter.topic_id == topic.id)
             .order_by(Chapter.sequence)
             .all()
         )
@@ -50,9 +58,6 @@ def get_curriculum(topic_id: str):
                 for c in chapters
             ],
         }
-
-    except Exception as e:
-        return {"status": "error", "message": "Failed to fetch curriculum"}
 
     finally:
         db.close()
