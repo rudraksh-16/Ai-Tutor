@@ -34,7 +34,6 @@ class CurriculumAgent:
     def execute_tool(self, name: str, args: dict):
         tool = self.tools[name]
         arg_names = {arg_name for arg_name, _ in tool.args_schema.args}
-        print(arg_names)
 
         if "user_id" in arg_names:
           args["user_id"] = self.user_id
@@ -78,7 +77,6 @@ class CurriculumAgent:
         while step < self.max_iteration:
             step += 1
             response = self._call_llm(chat_history)
-            print(f"{step}")
             assistant_text = ""
 
             for item in response.output:

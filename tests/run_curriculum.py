@@ -22,6 +22,8 @@ def run_curriculum(user_id: str, topic_id: str):
     while True:
         if chat_history:
             user_input = input("\n[You]: ").strip()
+            if user_input in ("bye", "good bye"):
+                break
             user_msg = {"role": "user", "content": user_input}
             chat_history.append(user_msg)
             append_response_json(user_id, topic_id, user_msg)
@@ -44,7 +46,8 @@ def run_curriculum(user_id: str, topic_id: str):
 
 def main():
     USER_ID = "0249cfc3-cce2-466e-9413-dc6db145ac5c"
-    TOPIC_ID = "c71d9d54-39e1-43eb-8331-1560920c0474"
+    # TOPIC_ID = "c71d9d54-39e1-43eb-8331-1560920c0474"
+    TOPIC_ID = "f4fa5222-244b-41f4-ba08-79b85a9d1470"
     # TOPIC_ID = str(uuid4())  # generate new topic_id when needed
     run_curriculum(USER_ID, TOPIC_ID)
 
