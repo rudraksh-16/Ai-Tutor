@@ -36,11 +36,10 @@ class CurriculumAgent:
         arg_names = {arg_name for arg_name, _ in tool.args_schema.args}
 
         if "user_id" in arg_names:
-          args["user_id"] = self.user_id
+            args["user_id"] = self.user_id
 
         if "topic_id" in arg_names:
             args["topic_id"] = self.topic_id
-
 
         return self.tools[name].execute(**args)
 
@@ -52,7 +51,7 @@ class CurriculumAgent:
             tools=[t.schema() for t in self.tools.values()],
             tool_choice="auto",
         )
-    
+
     def format_chat_history(self, input: list) -> list:
         chat_history = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -72,7 +71,7 @@ class CurriculumAgent:
     def invoke(self, chat_history: list):
         chat_history = self.format_chat_history(chat_history)
         step = 0
-        tool_call=[]
+        tool_call = []
 
         while step < self.max_iteration:
             step += 1
@@ -84,7 +83,7 @@ class CurriculumAgent:
                     tool_name = item.name
                     args = json.loads(item.arguments)
 
-                    tool_input={
+                    tool_input = {
                         "type": "function_call",
                         "name": tool_name,
                         "arguments": json.dumps(args),
@@ -94,7 +93,7 @@ class CurriculumAgent:
 
                     result = self.execute_tool(tool_name, args)
 
-                    tool_output={
+                    tool_output = {
                         "type": "function_call_output",
                         "call_id": item.call_id,
                         "output": json.dumps(result),

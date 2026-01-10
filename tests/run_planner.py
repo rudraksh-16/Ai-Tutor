@@ -2,7 +2,7 @@ from src.llm.main import run_planner
 
 
 def main():
-    TOPIC_ID = "c71d9d54-39e1-43eb-8331-1560920c0474"
+    TOPIC_ID = "fffda8e8-a223-4056-a934-cd5f1941bd1f"
     run_planner(TOPIC_ID)
 
 
