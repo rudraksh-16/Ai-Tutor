@@ -1,6 +1,3 @@
-from uuid import UUID
-
-
 class Tool:
     def __init__(self, func, args_class, description):
         self.func = func

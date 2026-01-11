@@ -59,7 +59,6 @@ class TeacherAgent:
     def invoke(self, chat_history):
         step = 0
         tool_calls = []
-        # assistant_text = None
         chat_history = self.format(chat_history)
         while step < self.max_iteration:
             step += 1
