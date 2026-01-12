@@ -114,9 +114,9 @@ class CurriculumAgent:
                             assistant_text += part.text
 
             if self.save_failures > 1:
-                return CurriculumConstants.SAVEING_ERROR_MESSAGE
+                return CurriculumConstants.ERROR_SAVE_CURRICULUM
 
             if assistant_text:
                 return assistant_text, tool_calls
 
-        return CurriculumConstants.ERROR_MESSAGE, tool_calls
+        return CurriculumConstants.ERROR_GENERIC, tool_calls

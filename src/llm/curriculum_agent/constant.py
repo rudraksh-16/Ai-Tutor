@@ -7,5 +7,5 @@ class CurriculumConstants:
     TEMPERATURE = 0.3
     MODEL = "gpt-4.1-mini"
 
-    ERROR_MESSAGE = "Something went wrong. Please try again."
-    SAVEING_ERROR_MESSAGE = "Apologies, there was an issue saving your curriculum."
+    ERROR_GENERIC = "Something went wrong. Please try again."
+    ERROR_SAVE_CURRICULUM = "Apologies, there was an issue saving your curriculum."
