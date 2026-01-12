@@ -71,7 +71,7 @@ class CurriculumAgent:
     def invoke(self, chat_history: list):
         chat_history = self.format_chat_history(chat_history)
         step = 0
-        tool_call = []
+        tool_calls = []
 
         while step < self.max_iteration:
             step += 1
@@ -98,7 +98,7 @@ class CurriculumAgent:
                         "call_id": item.call_id,
                         "output": json.dumps(result),
                     }
-                    tool_call.append({"input": tool_input, "output": tool_output})
+                    tool_calls.append({"input": tool_input, "output": tool_output})
                     chat_history.append(tool_output)
 
                     if tool_name == "upsert_curriculum":
@@ -114,9 +114,9 @@ class CurriculumAgent:
                             assistant_text += part.text
 
             if self.save_failures > 1:
-                return "Apologies, there was an issue saving your curriculum."
+                return CurriculumConstants.SAVEING_ERROR_MESSAGE
 
             if assistant_text:
-                return assistant_text, tool_call
+                return assistant_text, tool_calls
 
-        return "Something went wrong. Please try again.", tool_call
+        return CurriculumConstants.ERROR_MESSAGE, tool_calls

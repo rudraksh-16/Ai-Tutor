@@ -6,3 +6,6 @@ class CurriculumConstants:
     MAX_ITERATION = 8
     TEMPERATURE = 0.3
     MODEL = "gpt-4.1-mini"
+
+    ERROR_MESSAGE = "Something went wrong. Please try again."
+    SAVEING_ERROR_MESSAGE = "Apologies, there was an issue saving your curriculum."
