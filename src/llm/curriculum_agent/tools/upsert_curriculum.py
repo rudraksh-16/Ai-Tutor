@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from src.backend.models.topic import Topic
 from src.backend.models.chapter import Chapter
 from src.backend.db.database import SessionLocal
@@ -5,10 +7,11 @@ from src.llm.curriculum_agent.tools.argument_spec import ArgumentSpec as Args
 from src.backend.enums.status import Status
 
 
-class SaveCurriculumArgs:
+class UpsertCurriculumArgs:
     args = [
-        ("user_id", Args(type=int, description="The ID of the user", required=True)),
-        ("topic", Args(type=str, description="The curriculum topic", required=True)),
+        ("user_id", Args(type=str, description="The ID of the user", required=True)),
+        ("topic_id", Args(type=str, description="The ID of the topic", required=True)),
+        ("topic", Args(type=str, description="The title of topic", required=True)),
         (
             "chapter_number",
             Args(type=int, description="Chapter sequence number", required=True),
@@ -29,8 +32,9 @@ class SaveCurriculumArgs:
     ]
 
 
-def save_curriculum(
-    user_id: int,
+def upsert_curriculum(
+    user_id: str,
+    topic_id: str,
     topic: str,
     chapter_number: int,
     chapter_title: str,
@@ -38,49 +42,56 @@ def save_curriculum(
     user_summary: str,
 ) -> dict:
     """
-    Saves a generated curriculum after user confirmation to the database.
-
-    Args:
-        user_id (int): The ID of the user.
-        topic (str): The curriculum topic.
-        chapter_number (int): The chapter number.
-        chapter_title (str): The chapter title.
-        chapter_outline (str): The detailed chapter outline.
-        user_summary (str): The generated summary of the user's learning intent.
-
-    Returns:
-        dict: A dictionary with the status of the save operation.
+    This tool is responsible for both:
+    - saving a newly generated curriculum
+    - updating an existing curriculum
+    based on the provided input.
     """
     db = SessionLocal()
+    user_uuid = UUID(user_id)
+    topic_uuid = UUID(topic_id)
     try:
         existing_topic = (
             db.query(Topic)
-            .filter(Topic.user_id == user_id, Topic.title == topic)
+            .filter(Topic.user_id == user_uuid, Topic.id == topic_uuid)
             .first()
         )
         if existing_topic:
-            topic_id = existing_topic.id
+            topic_uuid = existing_topic.id
 
         else:
             new_topic = Topic(
-                user_id=user_id,
+                id=topic_uuid,
+                user_id=user_uuid,
                 title=topic,
                 status=Status.PENDING.value,
                 user_summary=user_summary,
             )
             db.add(new_topic)
-            db.flush()
-            topic_id = new_topic.id
 
-        new_chapter = Chapter(
-            topic_id=topic_id,
-            title=chapter_title,
-            sequence=chapter_number,
-            status=Status.PENDING.value,
-            outline=chapter_outline,
+        existing_chapter = (
+            db.query(Chapter)
+            .filter(
+                Chapter.topic_id == topic_uuid,
+                Chapter.sequence == chapter_number,
+            )
+            .first()
         )
 
-        db.add(new_chapter)
+        if existing_chapter:
+            existing_chapter.title = chapter_title
+            existing_chapter.outline = chapter_outline
+
+        else:
+            chapter = Chapter(
+                topic_id=topic_uuid,
+                title=chapter_title,
+                sequence=chapter_number,
+                status=Status.PENDING.value,
+                outline=chapter_outline,
+            )
+
+            db.add(chapter)
         db.commit()
 
         return {
@@ -90,7 +101,6 @@ def save_curriculum(
 
     except Exception as e:
         db.rollback()
-        print(f"Database Error: {e}")
         return {"status": "error", "reason": str(e)}
 
     finally:
