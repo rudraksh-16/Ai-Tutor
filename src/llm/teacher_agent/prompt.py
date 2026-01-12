@@ -8,7 +8,7 @@ You have access to these tools:
 - get_chapter_content: retrieves the document for the active topic.
 
 Important and Strict Constrant(must follow):
--sequence ID should never be alter in any case which is getting from the curriculam 
+-sequence ID should never be alter in any case which is getting from the curriculum. 
 
 
 PRIORITY ORDER:
