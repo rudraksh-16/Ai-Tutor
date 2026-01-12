@@ -1,10 +1,7 @@
-import json
-
 from src.llm.curriculum_agent.agent import CurriculumAgent
 from src.llm.teacher_agent.agent import TeacherAgent
 from src.llm.teacher_agent.constant import TeacherConstants
 from src.llm.curriculum_agent.constant import CurriculumConstants
-
 from src.llm.curriculum_agent.tools.upsert_curriculum import (
     upsert_curriculum,
     UpsertCurriculumArgs,
@@ -13,7 +10,6 @@ from src.llm.curriculum_agent.tools.get_curriculum import (
     get_curriculum,
     GetCurriculumArgs,
 )
-from src.llm.curriculum_agent.topic_exists import topic_exists
 from src.llm.teacher_agent.tools.get_user_curriculum import (
     get_user_curriculum,
     GetUserCurriculumArgs,
@@ -26,9 +22,7 @@ from src.llm.planner.chapter_planner import Planner
 from src.llm.planner.constant import PlannerConstants
 
 
-def run_curriculum_agent(
-    user_id: str, topic_id: str, chat_history: list, user_input: str
-):
+def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
 
     agent = CurriculumAgent(
         user_id=user_id,
@@ -49,9 +43,10 @@ def run_curriculum_agent(
         description="Fetches the complete curriculum for a given topic from the database.",
     )
 
-    ai_response, message = agent.invoke(chat_history)
+    ai_response, tool_call = agent.invoke(chat_history)
 
-    return ai_response, message
+    return ai_response, tool_call
+
 
 
 def run_teacher_agent(topic_id, chat_history):

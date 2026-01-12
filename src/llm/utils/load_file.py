@@ -1,24 +1,26 @@
 import json
-from pathlib import Path
+import os
+
+def load_json(file_path : str) -> list:
+    if not os.path.exists(file_path):
+        data = []
+    else:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+            data = []
+
+    return data
 
 
-def load_json(path: str) -> list[dict]:
-    p = Path(path)
-    with p.open("r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def append_response_json(path, new_item):
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    # Prevent nested lists
+def append_response_json(file_path: str, new_item):
+    data = load_json(file_path)
     if isinstance(new_item, list):
         data.extend(new_item)
     else:
         data.append(new_item)
-
-    with open(path, "w", encoding="utf-8") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, default=str)
 
 
