@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from src.llm.main import run_curriculum_agent
-from src.llm.utils.helper_function import load_chat_history, append_response_json, extract
+from src.llm.curriculum_agent.utils.helper import load_chat_history, append_response_json, extract
 
 def run_curriculum(user_id: str, topic_id: str):
     chat_history = load_chat_history(user_id, topic_id)
