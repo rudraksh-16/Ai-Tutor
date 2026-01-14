@@ -16,8 +16,6 @@ class Agent:
         model: str = Constants.DEFAULT_MODEL,
         temperature: float = Constants.DEFAULT_TEMPERATURE,
         max_iteration: int = Constants.DEFAULT_MAX_ITERATION,
-        user_id: Optional[str] = None,
-        topic_id: Optional[str] = None,
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
 
@@ -27,9 +25,6 @@ class Agent:
         self.temperature = temperature
         self.max_iteration = max_iteration
         self.tools = {}
-
-        self.user_id = user_id
-        self.topic_id = topic_id
 
     def add_tool(self, func, args_class=None, description=None):
         tool = Tool(func, args_class, description)
@@ -51,6 +46,27 @@ class Agent:
             tools=[tool.schema() for tool in self.tools.values()],
             tool_choice="auto",
         )
+    
+    def _final_tool_args(self, tool, llm_args: dict) -> dict:
+        if not tool.manual_arg:
+            return llm_args
+
+        manual_args = {}
+        missing = []
+
+        for arg in tool.manual_arg:
+            if hasattr(self, arg):
+                manual_args[arg] = getattr(self, arg)
+            else:
+                missing.append(arg)
+
+        if missing:
+            raise RuntimeError(
+                f"Missing required manual args for tool '{tool.name}': {missing}"
+            )
+
+        return {**llm_args, **manual_args}
+                    
 
     def _format_chat_history(self, user_input: list[dict]) -> List[dict]:
         history = [
@@ -80,7 +96,6 @@ class Agent:
                     tool_name = item.name
                     args = json.loads(item.arguments) if item.arguments else {}
 
-
                     tool_input = {
                         "type": "function_call",
                         "name": tool_name,
@@ -89,7 +104,11 @@ class Agent:
                     }
                     chat_history.append(tool_input)
 
-                    result = self._execute_tool(tool_name, args)
+                    tool = self.tools[tool_name]
+
+                    final_args = self._final_tool_args(tool, args)
+
+                    result = self._execute_tool(tool_name, final_args)
 
                     self.on_tool_result(tool_name, args, result)
 
@@ -99,7 +118,6 @@ class Agent:
                         "output": json.dumps(result),
                     }
                     chat_history.append(tool_output)
-
                     tool_calls.append({"input": tool_input, "output": tool_output})
 
                 elif item.type == "message":

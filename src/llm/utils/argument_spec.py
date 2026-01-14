@@ -7,9 +7,11 @@ class ArgumentSpec:
         type: str,
         description: str,
         required: bool,
+        manual_arg: bool = False,
         default: Optional[Any] = None,
     ):
         self.type = type
         self.description = description
+        self.manual_arg = manual_arg
         self.required = required
         self.default = default
