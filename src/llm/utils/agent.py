@@ -12,7 +12,7 @@ class Agent:
     def __init__(
         self,
         system_prompt: str,
-        user_prompt: str = Constants.DEFAULT_USER_PROMPT,
+        user_prompt: str = None,
         model: str = Constants.DEFAULT_MODEL,
         temperature: float = Constants.DEFAULT_TEMPERATURE,
         max_iteration: int = Constants.DEFAULT_MAX_ITERATION,
@@ -31,15 +31,17 @@ class Agent:
         self.user_id = user_id
         self.topic_id = topic_id
 
-    def add_tool(self, func, args_class, description):
+    def add_tool(self, func, args_class=None, description=None):
         tool = Tool(func, args_class, description)
         self.tools[tool.name] = tool
 
     def on_tool_result(self, tool_name: str, args: dict, result: dict):
         pass
 
-    def _execute_tool(self, name: str, args: dict):
-        return self.tools[name].execute(**args)
+    def _execute_tool(self, name: str, args: Optional[dict]):
+        if args:
+            return self.tools[name].execute(**args)
+        return self.tools[name].execute()
 
     def _call_llm(self, chat_history: List[dict]):
         return self.client.responses.create(
@@ -53,8 +55,9 @@ class Agent:
     def _format_chat_history(self, user_input: list[dict]) -> List[dict]:
         history = [
             {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": self.user_prompt},
         ]
+        if self.user_prompt:
+            history.append({"role": "user", "content": self.user_prompt})
 
         if isinstance(user_input, list):
             history.extend(user_input)
@@ -75,7 +78,8 @@ class Agent:
 
                 if item.type == "function_call":
                     tool_name = item.name
-                    args = json.loads(item.arguments)
+                    args = json.loads(item.arguments) if item.arguments else {}
+
 
                     tool_input = {
                         "type": "function_call",
