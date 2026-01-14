@@ -39,15 +39,6 @@ class Agent:
         pass
 
     def _execute_tool(self, name: str, args: dict):
-        tool = self.tools[name]
-        arg_names = {arg_name for arg_name, _ in tool.args_schema.args}
-
-        if "user_id" in arg_names:
-            args["user_id"] = self.user_id
-
-        if "topic_id" in arg_names:
-            args["topic_id"] = self.topic_id
-
         return self.tools[name].execute(**args)
 
     def _call_llm(self, chat_history: List[dict]):
