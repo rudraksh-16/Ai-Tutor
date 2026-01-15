@@ -1,12 +1,12 @@
 from typing import Any, Optional, Type
 
 
-class ArgumentSpec:
+class ArgsSchema:
     def __init__(
         self,
-        type: str,
+        type: Type,
         description: str,
-        required: bool,
+        required: bool = True,
         default: Optional[Any] = None,
     ):
         self.type = type

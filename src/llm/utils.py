@@ -1,7 +1,8 @@
 import json
 import os
 
-def load_json(file_path : str) -> list:
+
+def load_json(file_path: str) -> list:
     if not os.path.exists(file_path):
         data = []
     else:
