@@ -3,8 +3,8 @@ from openai import OpenAI
 from typing import List, Optional
 
 from src.llm.config import LLMConfig
-from src.llm.utils.constant import Constants
-from src.llm.utils.tool import Tool
+from src.llm.agent_core.constant import Constants
+from src.llm.agent_core.tool import Tool
 
 
 class Agent:
