@@ -26,8 +26,7 @@ class Agent:
         self.max_iteration = max_iteration
         self.tools = {}
 
-    def add_tool(self, func, args_class=None, description=None):
-        tool = Tool(func, args_class, description)
+    def add_tool(self, tool: Tool):
         self.tools[tool.name] = tool
 
     def on_tool_result(self, tool_name: str, args: dict, result: dict):
@@ -47,27 +46,6 @@ class Agent:
             tool_choice="auto",
         )
     
-    def _final_tool_args(self, tool, llm_args: dict) -> dict:
-        if not tool.manual_arg:
-            return llm_args
-
-        manual_args = {}
-        missing = []
-
-        for arg in tool.manual_arg:
-            if hasattr(self, arg):
-                manual_args[arg] = getattr(self, arg)
-            else:
-                missing.append(arg)
-
-        if missing:
-            raise RuntimeError(
-                f"Missing required manual args for tool '{tool.name}': {missing}"
-            )
-
-        return {**llm_args, **manual_args}
-                    
-
     def _format_chat_history(self, user_input: list[dict]) -> List[dict]:
         history = [
             {"role": "system", "content": self.system_prompt},
@@ -104,11 +82,7 @@ class Agent:
                     }
                     chat_history.append(tool_input)
 
-                    tool = self.tools[tool_name]
-
-                    final_args = self._final_tool_args(tool, args)
-
-                    result = self._execute_tool(tool_name, final_args)
+                    result = self._execute_tool(tool_name, args)
 
                     self.on_tool_result(tool_name, args, result)
 

@@ -1,17 +1,15 @@
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 
 class ArgumentSpec:
     def __init__(
         self,
-        type: str,
+        type: Type,
         description: str,
-        required: bool,
-        manual_arg: bool = False,
+        required: bool = True,
         default: Optional[Any] = None,
     ):
         self.type = type
         self.description = description
-        self.manual_arg = manual_arg
         self.required = required
         self.default = default
