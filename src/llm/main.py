@@ -1,17 +1,9 @@
-import json
-
 from src.llm.curriculum_agent.agent import CurriculumAgent
 from src.llm.teacher_agent.agent import TeacherAgent
 from src.llm.teacher_agent.constant import TeacherConstants
 from src.llm.curriculum_agent.constant import CurriculumConstants
-from src.llm.curriculum_agent.tools.upsert_curriculum import (
-    upsert_curriculum,
-    UpsertCurriculumArgs,
-)
-from src.llm.curriculum_agent.tools.get_curriculum import (
-    get_curriculum,
-    GetCurriculumArgs,
-)
+from src.llm.curriculum_agent.tools.upsert_curriculum import make_upsert_curriculum_tool
+from src.llm.curriculum_agent.tools.get_curriculum import make_get_curriculum_tool
 from src.llm.teacher_agent.tools.get_user_curriculum import (
     get_user_curriculum,
     GetUserCurriculumArgs,
@@ -33,17 +25,9 @@ def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
         temperature=CurriculumConstants.TEMPERATURE,
         max_iteration=CurriculumConstants.MAX_ITERATION,
     )
-    agent.add_tool(
-        upsert_curriculum,
-        UpsertCurriculumArgs,
-        description="This tool is responsible for both: saving a newly generated curriculum and updating an existing curriculum -> based on the provided input.",
-    )
+    agent.add_tool(make_upsert_curriculum_tool(user_id, topic_id))
 
-    agent.add_tool(
-        get_curriculum,
-        GetCurriculumArgs,
-        description="Fetches the complete curriculum for a given topic from the database.",
-    )
+    agent.add_tool(make_get_curriculum_tool(topic_id))
 
     ai_response, tool_call = agent.invoke(chat_history)
 
