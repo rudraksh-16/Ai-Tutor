@@ -28,6 +28,9 @@ def append_response_json(file_path: str, new_item):
 def extract(tool_results):
     result = []
     for tool in tool_results:
-        result.append(tool["input"])
-        result.append(tool["output"])
+        if tool["input"]["name"] == "get_user_curriculum_tool":
+            print("get_user_curriculum_tool called")
+        else:
+            result.append(tool["input"])
+            result.append(tool["output"])
     return result

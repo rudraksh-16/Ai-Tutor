@@ -95,9 +95,13 @@ Current chapter:
 All chapters:
 {all_chapters}
 
+<<<<<<< Updated upstream
 Current outline:
 Title: {outline_title}
 Sequence: {sequence}
 
 Please generate detailed instructional content for THIS outline ONLY.
+=======
+Please generate a detailed teaching plan for the current chapter.
+>>>>>>> Stashed changes
 """

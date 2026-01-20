@@ -44,8 +44,9 @@ class Agent:
             input=chat_history,
             tools=[tool.schema() for tool in self.tools.values()],
             tool_choice="auto",
+            
         )
-    
+
     def _format_chat_history(self, user_input: list[dict]) -> List[dict]:
         history = [
             {"role": "system", "content": self.system_prompt},

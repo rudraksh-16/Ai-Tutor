@@ -1,3 +1,4 @@
+
 from src.llm.curriculum_agent.agent import CurriculumAgent
 from src.llm.teacher_agent.agent import TeacherAgent
 from src.llm.teacher_agent.constant import TeacherConstants
@@ -5,17 +6,16 @@ from src.llm.curriculum_agent.constant import CurriculumConstants
 from src.llm.curriculum_agent.tools.upsert_curriculum import make_upsert_curriculum_tool
 from src.llm.curriculum_agent.tools.get_curriculum import make_get_curriculum_tool
 from src.llm.curriculum_agent.tools.web_search import make_web_search_tool
-from src.llm.teacher_agent.tools.get_user_curriculum import (
-    get_user_curriculum,
-    GetUserCurriculumArgs,
-)
-from src.llm.teacher_agent.tools.get_chapter_content import (
-    GetChapterArgs,
-    get_chapter_content,
-)
+
+from src.llm.teacher_agent.tools.get_outline_content import make_get_outline_content
+
+from src.llm.teacher_agent.tools.get_user_curriculum import  make_get_user_curriculum
+
+from src.llm.teacher_agent.tools.update_status import  make_update_status
 from src.llm.planner.agent import PlannerAgent
 from src.llm.planner.tools.web_search import make_web_search_tool
 from src.llm.planner.constant import PlannerConstants
+
 
 
 def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
@@ -35,25 +35,21 @@ def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
     
     ai_response, tool_call = agent.invoke(chat_history)
 
-    return ai_response, tool_call
+#     return ai_response, tool_call
 
 
-
-def run_teacher_agent(topic_id, chat_history):
+def run_teacher_agent(chapter_id, chat_history):
     agent = TeacherAgent(
-        topic_id=topic_id,
+        chapter_id=chapter_id,
         model=TeacherConstants.MODEL_NAME,
         max_iteration=TeacherConstants.MAX_ITERATION,
         temperature=TeacherConstants.MODEL_TEMPERATURE,
     )
-    agent.add_tool(
-        get_chapter_content,
-        GetChapterArgs,
-        "Load chapter content by chapter sequence and topic id.",
-    )
-    agent.add_tool(
-        get_user_curriculum, GetUserCurriculumArgs, "Get curriculum plan by topic id."
-    )
+    agent.add_tool(make_get_user_curriculum(chapter_id))
+    agent.add_tool(make_get_chapter(chapter_id))
+    agent.add_tool(make_get_outline_content(chapter_id))
+    agent.add_tool(make_update_status(chapter_id))
+
 
     assistant_text, tool_calls = agent.invoke(chat_history)
     return assistant_text, tool_calls

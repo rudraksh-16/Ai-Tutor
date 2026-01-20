@@ -30,6 +30,12 @@ class Tool:
                 "description": args.description,
             }
 
+            if args.enum is not None:
+                properties[name]["enum"] = args.enum
+
+            if args.default is not None:
+                properties[name]["default"] = args.default
+
             if args.required:
                 required.append(name)
 

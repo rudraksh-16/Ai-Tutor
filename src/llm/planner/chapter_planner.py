@@ -52,7 +52,9 @@ class Planner:
         chapter_id = UUID(chapter_id)
         try:
             existing_plan = (
-                db.query(ChapterPlan).filter(ChapterPlan.chapter_id == chapter_id).first()
+                db.query(ChapterPlan)
+                .filter(ChapterPlan.chapter_id == chapter_id)
+                .first()
             )
             if existing_plan:
                 print(f"plan for chapter id {chapter_id} already exists")
@@ -79,9 +81,7 @@ class Planner:
             all_chapter_ids = {ch.chapter_id for ch in chapters}
             saved_chapter_ids = set()
 
-            all_chapters_text = "\n".join(
-                f"- {c.chapter_title}" for c in chapters
-            )
+            all_chapters_text = "\n".join(f"- {c.chapter_title}" for c in chapters)
 
             retry_count = 0
 
@@ -117,9 +117,7 @@ class Planner:
                 retry_count += 1
 
             missing = all_chapter_ids - saved_chapter_ids
-            raise RuntimeError(
-                f"Failed to save plans for chapters: {missing}"
-            )
+            raise RuntimeError(f"Failed to save plans for chapters: {missing}")
 
         finally:
             db.close()

@@ -11,9 +11,7 @@ def run_curriculum(user_id: str, topic_id: str):
         pass
     else:
         response, tool_call = run_curriculum_agent(
-            user_id=user_id,
-            topic_id=topic_id,
-            chat_history=chat_history
+            user_id=user_id, topic_id=topic_id, chat_history=chat_history
         )
         assistant_msg = {"role": "assistant", "content": response}
         chat_history.append(assistant_msg)
@@ -43,7 +41,6 @@ def run_curriculum(user_id: str, topic_id: str):
         append_response_json(path, assistant_msg)
 
         print(f"[AI]: {response}")
-
 
 
 def main():
