@@ -16,6 +16,7 @@ class Topic(BaseModel):
     status = Column(
         Enum(Status, values_callable=lambda e: [member.value for member in e]),
         nullable=False,
+        default=Status.PENDING.value,
     )
     user_summary = Column(Text, nullable=False)
 
