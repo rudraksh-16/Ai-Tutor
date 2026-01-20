@@ -5,14 +5,14 @@ from sqlalchemy.dialects.postgresql import UUID
 from src.backend.models.base import BaseModel
 
 
-class ChapterPlan(BaseModel):
-    __tablename__ = "chapter_plans"
+class OutlinePlan(BaseModel):
+    __tablename__ = "outline_plans"
 
-    chapter_id = Column(
+    outline_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("chapters.id", ondelete="CASCADE"),
+        ForeignKey("outlines.id", ondelete="CASCADE"),
         nullable=False,
     )
     content = Column(Text, nullable=False)
 
-    chapter = relationship("Chapter", back_populates="chapter_plan")
+    outline = relationship("Outline", back_populates="outline_plan")

@@ -1,6 +1,13 @@
-def chapter_to_dict(topic):
+def chapter_to_dict(chapter, outlines):
     return {
-        "title": topic.chapter_title,
-        "sequence": topic.sequence,
-        "outline": topic.outline,
+        "title": chapter.title,
+        "sequence": chapter.sequence,
+        "outlines": [outline_to_dict(o) for o in outlines],
+    }
+
+
+def outline_to_dict(outline):
+    return {
+        "title": outline.title,
+        "sequence": outline.sequence,
     }

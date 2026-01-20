@@ -6,24 +6,26 @@ from src.backend.models.base import BaseModel
 from src.backend.enums.status import Status
 
 
-class Chapter(BaseModel):
-    __tablename__ = "chapters"
+class Outline(BaseModel):
+    __tablename__ = "outlines"
 
-    topic_id = Column(
-        UUID(as_uuid=True), ForeignKey("topics.id", ondelete="CASCADE"), nullable=False
+    chapter_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("chapters.id", ondelete="CASCADE"),
+        nullable=False,
     )
+
     title = Column(String, nullable=False)
-    sequence = Column(Integer, nullable=False)
     status = Column(
         Enum(Status, values_callable=lambda e: [member.value for member in e]),
         nullable=False,
     )
-    outline = Column(Text, nullable=False)
+    sequence = Column(Integer, nullable=False)
+    context = Column(Text, nullable=False)
 
-    outlines = relationship(
-        "Outline",
-        back_populates="chapter",
+    chapter = relationship("Chapter", back_populates="outlines")
+    outline_plan = relationship(
+        "OutlinePlan",
+        back_populates="outline",
         cascade="all, delete-orphan",
-        order_by="Outline.sequence",
     )
-    topic = relationship("Topic", back_populates="chapters")

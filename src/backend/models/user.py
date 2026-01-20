@@ -10,3 +10,6 @@ class User(BaseModel):
     name = Column(String, nullable=False)
 
     topics = relationship("Topic", back_populates="user", cascade="all, delete-orphan")
+    conversations = relationship(
+        "Conversation", back_populates="user_conversation", cascade="all, delete-orphan"
+    )

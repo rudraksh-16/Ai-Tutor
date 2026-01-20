@@ -1,14 +1,16 @@
 from src.llm.main import run_teacher_agent
-from src.llm.utils.load_file import load_json, append_response_json, extract
+from src.llm.utils import load_json, append_response_json, extract
 
 
 def main():
-    TOPIC_ID = "5c5f9b4c-7b9b-4c65-8dd1-52e9580406cd"
-    PATH = "chat_history/teacher_agent/chat_history.json"
+    TOPIC_ID = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    PATH = "chat_history/teacher_agent/chat_history1.json"
     while True:
         chat_history = load_json(PATH)
         if chat_history:
             user_input = input("\n[Your Response]: ")
+            if user_input in ("bye", "good bye"):
+                break
             user = {"role": "user", "content": user_input}
             append_response_json(PATH, user)
             chat_history.append(user)
