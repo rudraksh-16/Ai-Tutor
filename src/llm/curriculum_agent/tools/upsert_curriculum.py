@@ -2,34 +2,53 @@ from uuid import UUID
 
 from src.backend.models.topic import Topic
 from src.backend.models.chapter import Chapter
+from src.backend.models.outline import Outline
 from src.backend.db.database import SessionLocal
-from src.llm.curriculum_agent.tools.argument_spec import ArgumentSpec as Args
+from src.llm.agent_core.args_schema import ArgsSchema as Args
+from src.llm.agent_core.tool import Tool
 from src.backend.enums.status import Status
+from src.llm.curriculum_agent.utils.helper import parse_outline
 
 
 class UpsertCurriculumArgs:
     args = [
-        ("user_id", Args(type=str, description="The ID of the user", required=True)),
-        ("topic_id", Args(type=str, description="The ID of the topic", required=True)),
-        ("topic", Args(type=str, description="The title of topic", required=True)),
-        (
-            "chapter_number",
-            Args(type=int, description="Chapter sequence number", required=True),
-        ),
-        ("chapter_title", Args(type=str, description="Chapter title", required=True)),
-        (
-            "chapter_outline",
-            Args(type=str, description="Detailed chapter outline", required=True),
-        ),
-        (
-            "user_summary",
+        ("topic", Args(type=str, description="The title of topic")),
+        ("chapter_number",
+            Args(type=int, description="Chapter sequence number")),
+        ("chapter_title", Args(type=str, description="Chapter title")),
+        ("chapter_outline",
+            Args(type=list, description="Detailed chapter outline")),
+        ("user_summary",
             Args(
                 type=str,
                 description="Generated summary of user's learning intent",
-                required=True,
-            ),
-        ),
+            )),
     ]
+
+def make_upsert_curriculum_tool(user_id: str, topic_id: str):
+    def upsert_curriculum_tool(
+        topic: str,
+        chapter_number: int,
+        chapter_title: str,
+        chapter_outline: list[str],
+        user_summary: str,
+    ):
+        return upsert_curriculum(
+            user_id=user_id,
+            topic_id=topic_id,
+            topic=topic,
+            chapter_number=chapter_number,
+            chapter_title=chapter_title,
+            chapter_outline=chapter_outline,
+            user_summary=user_summary,
+        )
+
+    return Tool(
+
+        func=upsert_curriculum_tool,
+        description="Save or update a curriculum chapter",
+        args_schema=UpsertCurriculumArgs
+    )
 
 
 def upsert_curriculum(
@@ -38,7 +57,7 @@ def upsert_curriculum(
     topic: str,
     chapter_number: int,
     chapter_title: str,
-    chapter_outline: str,
+    chapter_outline: list[str],
     user_summary: str,
 ) -> dict:
     """
@@ -50,26 +69,26 @@ def upsert_curriculum(
     db = SessionLocal()
     user_uuid = UUID(user_id)
     topic_uuid = UUID(topic_id)
+    chapter_outline = parse_outline(chapter_outline)
+
     try:
-        existing_topic = (
+        topic_obj = (
             db.query(Topic)
-            .filter(Topic.user_id == user_uuid, Topic.id == topic_uuid)
+            .filter(Topic.id == topic_uuid)
             .first()
         )
-        if existing_topic:
-            topic_uuid = existing_topic.id
 
-        else:
-            new_topic = Topic(
+        if not topic_obj:
+            topic_obj = Topic(
                 id=topic_uuid,
                 user_id=user_uuid,
                 title=topic,
                 status=Status.PENDING.value,
                 user_summary=user_summary,
             )
-            db.add(new_topic)
+            db.add(topic_obj)
 
-        existing_chapter = (
+        chapter = (
             db.query(Chapter)
             .filter(
                 Chapter.topic_id == topic_uuid,
@@ -78,20 +97,32 @@ def upsert_curriculum(
             .first()
         )
 
-        if existing_chapter:
-            existing_chapter.title = chapter_title
-            existing_chapter.outline = chapter_outline
-
+        if chapter:
+            chapter.title = chapter_title
         else:
             chapter = Chapter(
                 topic_id=topic_uuid,
                 title=chapter_title,
                 sequence=chapter_number,
                 status=Status.PENDING.value,
-                outline=chapter_outline,
+            )
+            db.add(chapter)
+            db.flush()
+
+        db.query(Outline).filter(
+            Outline.chapter_id == chapter.id
+        ).delete()
+
+        for idx, outline_text in enumerate(chapter_outline, start=1):
+            db.add(
+                Outline(
+                    chapter_id=chapter.id,
+                    sequence=idx,
+                    status=Status.PENDING.value,
+                    title=outline_text,
+                )
             )
 
-            db.add(chapter)
         db.commit()
 
         return {

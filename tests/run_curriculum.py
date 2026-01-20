@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from src.llm.main import run_curriculum_agent
 from src.llm.curriculum_agent.utils.helper import get_file_path
-from src.llm.utils.load_file import load_json, append_response_json, extract
+from src.llm.utils import load_json, append_response_json, extract
 
 def run_curriculum(user_id: str, topic_id: str):
     path = get_file_path(user_id, topic_id)
@@ -47,8 +47,8 @@ def run_curriculum(user_id: str, topic_id: str):
 
 
 def main():
-    USER_ID = "0249cfc3-cce2-466e-9413-dc6db145ac5c"
-    TOPIC_ID = "4e4af430-12cd-4004-a44b-2148e3a1f03a"
+    USER_ID = "c72a838f-46be-4484-bc3e-c8bb9f438c03"
+    TOPIC_ID = "e1e581fb-9f0c-4317-829d-75574b6aaa99"
     # TOPIC_ID = str(uuid4())  # generate new topic_id when needed
     run_curriculum(USER_ID, TOPIC_ID)
 
