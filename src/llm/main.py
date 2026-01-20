@@ -11,6 +11,7 @@ from src.llm.teacher_agent.tools.get_outline_content import make_get_outline_con
 
 from src.llm.teacher_agent.tools.get_user_curriculum import  make_get_user_curriculum
 
+from src.llm.teacher_agent.tools.get_chapter import  make_get_chapter
 from src.llm.teacher_agent.tools.update_status import  make_update_status
 from src.llm.planner.agent import PlannerAgent
 from src.llm.planner.tools.web_search import make_web_search_tool
@@ -35,7 +36,7 @@ def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
     
     ai_response, tool_call = agent.invoke(chat_history)
 
-#     return ai_response, tool_call
+    return ai_response, tool_call
 
 
 def run_teacher_agent(chapter_id, chat_history):
