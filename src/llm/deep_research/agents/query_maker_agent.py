@@ -52,6 +52,5 @@ def query_maker_agent(state: ResearchState) -> ResearchState:
     return {
         **state,
         "subtopics": subtopics,
-        "subtopic_coverage": {t: 0.0 for t in subtopics},
         "success_criteria": success_criteria,
     }
