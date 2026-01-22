@@ -45,7 +45,7 @@ class Agent:
             tools=[tool.schema() for tool in self.tools.values()],
             tool_choice="auto",
         )
-    
+
     def _format_chat_history(self, user_input: list[dict]) -> List[dict]:
         history = [
             {"role": "system", "content": self.system_prompt},
@@ -103,3 +103,103 @@ class Agent:
                 return assistant_text, tool_calls
 
         return Constants.ERROR_GENERIC, tool_calls
+
+    def _call_llm_stream(self, chat_history: List[dict]):
+        return self.client.responses.create(
+            model=self.model,
+            temperature=self.temperature,
+            input=chat_history,
+            tools=[tool.schema() for tool in self.tools.values()],
+            tool_choice="auto",
+            stream=True,
+        )
+
+    def stream(self, chat_history):
+        chat_history = self._format_chat_history(chat_history)
+        tool_calls = []
+        final_text = ""
+        MAX_TOOL_CALLS = 5
+
+        for _ in range(self.max_iteration):
+            if final_text or len(tool_calls) >= MAX_TOOL_CALLS:
+                break
+
+            current_tool = None
+            tool_args_buffer = ""
+
+            with self._call_llm_stream(chat_history) as stream:
+                for event in stream:
+                    #  Normal text streaming
+                    if event.type == "response.output_text.delta":
+                        final_text += event.delta
+                        yield {"type": "text", "data": event.delta}
+
+                    #  IMPLICIT tool start
+                    elif event.type == "response.output_item.added":
+                        item = event.item
+
+                        if getattr(item, "type", None) == "function_call":
+                            current_tool = {
+                                "name": item.name,
+                                "call_id": item.call_id,
+                            }
+                            tool_args_buffer = ""
+
+
+                    #  Tool arguments streaming
+                    elif event.type == "response.function_call_arguments.delta":
+                        tool_args_buffer += event.delta or ""
+                        
+
+                    #  IMPLICIT tool completion
+                    elif event.type == "response.function_call_arguments.done":
+                        if current_tool:
+                            try:
+                                args = (
+                                    json.loads(tool_args_buffer)
+                                    if tool_args_buffer
+                                    else {}
+                                )
+                            except json.JSONDecodeError:
+                                raise
+
+                            result = self._execute_tool(current_tool["name"], args)
+                            self.on_tool_result(current_tool["name"], args, result)
+
+                            tool_input = {
+                                "type": "function_call",
+                                "name": current_tool["name"],
+                                "arguments": tool_args_buffer or "{}",
+                                "call_id": current_tool["call_id"],
+                            }
+
+                            tool_output = {
+                                "type": "function_call_output",
+                                "call_id": current_tool["call_id"],
+                                "output": json.dumps(result),
+                            }
+
+                            chat_history.append(tool_input)
+                            chat_history.append(tool_output)
+
+                            tool_calls.append(
+                                {
+                                    "input": tool_input,
+                                    "output": tool_output,
+                                }
+                            )
+
+                            yield {"type": "tool_call", "data": tool_calls[-1]}
+
+                            current_tool = None
+                            tool_args_buffer = ""
+
+                    #  Response finished
+                    elif event.type == "response.completed":
+                        yield {
+                            "type": "final",
+                            "data": {
+                                "assistent_test": final_text,
+                                "tool_calls": tool_calls,
+                            },
+                        }
