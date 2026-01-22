@@ -21,7 +21,7 @@ class UpsertCurriculumArgs:
         ("chapter_title", Args(type=str, description="Chapter title")),
         (
             "chapter_outline",
-            Args(type=list, description="Detailed chapter outline"),
+            Args(type=str, description="Detailed chapter outline"),
         ),
         (
             "user_summary",
