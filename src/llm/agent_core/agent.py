@@ -199,7 +199,7 @@ class Agent:
                         yield {
                             "type": "final",
                             "data": {
-                                "assistent_test": final_text,
+                                "assistant_test": final_text,
                                 "tool_calls": tool_calls,
                             },
                         }
