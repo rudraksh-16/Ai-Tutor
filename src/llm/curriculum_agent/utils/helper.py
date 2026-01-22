@@ -1,7 +1,7 @@
 import json
 import os
 
-BASE_DIR = "./chat_history"
+BASE_DIR = "./chat_history/curriculum_agent"
 
 
 def get_file_path(user_id: str, topic_id: str) -> str:
