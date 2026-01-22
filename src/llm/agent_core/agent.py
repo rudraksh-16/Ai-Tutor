@@ -16,6 +16,8 @@ class Agent:
         model: str = Constants.DEFAULT_MODEL,
         temperature: float = Constants.DEFAULT_TEMPERATURE,
         max_iteration: int = Constants.DEFAULT_MAX_ITERATION,
+        max_tool_call : int = Constants.MAX_TOOL_CALLS,
+
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
 
@@ -24,6 +26,7 @@ class Agent:
         self.model = model
         self.temperature = temperature
         self.max_iteration = max_iteration
+        self.max_tool_call = max_tool_call
         self.tools = {}
 
     def add_tool(self, tool: Tool):
@@ -118,10 +121,9 @@ class Agent:
         chat_history = self._format_chat_history(chat_history)
         tool_calls = []
         final_text = ""
-        MAX_TOOL_CALLS = 5
 
         for _ in range(self.max_iteration):
-            if final_text or len(tool_calls) >= MAX_TOOL_CALLS:
+            if final_text or len(tool_calls) >= self.max_tool_call:
                 break
 
             current_tool = None
