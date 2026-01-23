@@ -1,87 +1,58 @@
+import requests
 import logging
-from typing import List, Dict
-
-from tavily import TavilyClient
-
-from src.llm.deep_research.tools.rate_limiter import RateLimiter
-from src.llm.config import LLMConfig
+from deep_research.tools.rate_limiter import RateLimiter
+from config import Config
 
 logger = logging.getLogger(__name__)
 
-tavily_rate_limiter = RateLimiter(
-    max_calls=5,
-    period=1.0
-)
+google_rate_limiter = RateLimiter(max_calls=5, period=1.0)
 
 
-def web_search(query: str, max_results: int = 5) -> List[Dict]:
+def web_search(query: str, max_results: int = 5) -> str:
     """
-    Web search tool using Tavily (production-safe).
-
-    - Enforces rate limiting
-    - Logs lifecycle events
-    - Returns normalized results for agents
+    Web search tool (Google can be plugged here).
     """
-    logger.debug("Web search requested | query=%r | max_results=%d", query, max_results)
+    print(f"-------- search tool called for query: {query}\n")
+    google_rate_limiter.acquire()
 
-    tavily_rate_limiter.acquire()
+    params = {
+        "key": Config.GOOGLE_SEARCH_API_KEY,
+        "cx": Config.GOOGLE_SEARCH_ENGINE,
+        "q": query,
+        "num": min(max_results, 10),
+    }
+
+    logger.debug("Sending Google search request | query=%s", query)
+
+    response = requests.get(
+        Config.GOOGLE_SEARCH_ENDPOINT,
+        params=params,
+        timeout=10,
+    )
 
     try:
-        search_client = TavilySearch()
-        results = search_client.search(query, max_results)
-
-        logger.info(
-            "Web search completed | provider=tavily | query=%r | results=%d",
-            query,
-            len(results),
-        )
-
-        return results
-
-    except Exception as exc:
-        logger.exception(
-            "Web search failed | provider=tavily | query=%r | error=%s",
-            query,
-            exc,
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        logger.error(
+            "Google search failed | status=%s | error=%s", response.status_code, e
         )
         raise
 
+    data = response.json()
 
-class TavilySearch:
-    """
-    Tavily search client wrapper.
+    if not data.get("items"):
+        logger.warning("Google search returned no results | query=%s", query)
+        return []
 
-    Keeps SDK usage isolated and testable.
-    """
-
-    def __init__(self):
-        self.client = TavilyClient(api_key=LLMConfig.TAVILY_API_KEY)
-        logger.debug("TavilySearch client initialized")
-
-    def search(self, query: str, max_results: int) -> List[Dict]:
-        logger.debug(
-            "Sending Tavily search request | query=%r | max_results=%d",
-            query,
-            max_results,
-        )
-
-        response = self.client.search(
-            query=query,
-            max_results=max_results,
-            include_raw_content=False,
-        )
-
-        results = [
+    results = []
+    for item in data.get("items", []):
+        results.append(
             {
                 "title": item.get("title"),
-                "content": item.get("content"),
-                "url": item.get("url"),
-                "source": "tavily",
+                "url": item.get("link"),
+                "snippet": item.get("snippet"),
             }
-            for item in response.get("results", [])
-        ]
+        )
 
-        if not results:
-            logger.warning("Tavily returned no results | query=%r", query)
-
-        return results
+    logger.info("Google search succeeded | results=%d", len(results))
+    return results
