@@ -71,7 +71,6 @@ class Researcher(Agent):
 
         subtopic = self.state["current_subtopic"]
         query = args.get("query")
-        print(f"### query: {query}")
 
         if query in executed:
             logger.info("Skipping duplicate search: %s", query)

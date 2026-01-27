@@ -49,7 +49,6 @@ def query_node(state: ResearchState) -> ResearchState:
     logger.info("QueryMaker Agent invoke completed sucessfully")
     logger.info(f"Generated response {ai_response}")
     plan = json.loads(ai_response)
-    size = len(plan["subtopics"])
     state["subtopics"] = plan["subtopics"]
     state["success_criteria"] = plan["success_criteria"]
     state["current_subtopic"] = plan["subtopics"][0]

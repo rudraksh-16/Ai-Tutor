@@ -18,5 +18,5 @@ class ResearchState(TypedDict):
     index: int
     draft: str
     critique: Optional[str]
-    missing: str
-    improvement_instructions: str
+    missing: Optional[str]
+    improvement_instructions: Optional[str]

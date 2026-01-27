@@ -14,13 +14,13 @@ from src.llm.deep_research.agents.synthesizer import synthesizer_node
 graph = StateGraph(ResearchState)
 
 graph.add_node("planner", query_node)
+graph.add_node("set_next_query", set_next_query_node)
 graph.add_node("researcher", research_node)
 graph.add_node("reviewer", reviewer_node)
 graph.add_node("synthesizer", synthesizer_node)
 
 graph.add_edge(START, "planner")
 graph.add_edge("planner", "set_next_query")
-graph.add_node("set_next_query", set_next_query_node)
 graph.add_conditional_edges(
     "set_next_query",
     route_after_set_next_query,

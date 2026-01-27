@@ -52,8 +52,6 @@ def reviewer_node(state: ResearchState) -> ResearchState:
         logger.exception("Reviewer returned invalid JSON")
         state["approved"] = False
         return state
-    # print("==== SCRATCHPAD ====")
-    # print(state["scratchpad"])
 
     final_score = (
         data["scores"]["coverage"]
@@ -93,5 +91,5 @@ def reviewer_node(state: ResearchState) -> ResearchState:
 
 def route_after_reviewer(state: ResearchState) -> str:
     if not state.get("approved"):
-        return "researcher"  # retry same subtopic
-    return "set_next_query"  # move forward
+        return "researcher"
+    return "set_next_query"
