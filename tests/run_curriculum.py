@@ -1,8 +1,16 @@
 from uuid import uuid4
+import os
 
 from src.llm.main import run_curriculum_agent
-from src.llm.curriculum_agent.utils.helper import get_file_path
 from src.llm.utils.helper_functions import load_json, append_response_json, extract
+
+
+BASE_DIR = "./chat_history/curriculum_agent"
+
+def get_file_path(user_id: str, topic_id: str) -> str:
+    user_dir = os.path.join(BASE_DIR, user_id)
+    os.makedirs(user_dir, exist_ok=True)
+    return os.path.join(user_dir, f"{topic_id}.json")
 
 def run_curriculum(user_id: str, topic_id: str):
     path = get_file_path(user_id, topic_id)
@@ -52,3 +60,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
