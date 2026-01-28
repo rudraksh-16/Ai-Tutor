@@ -2,7 +2,7 @@ from uuid import uuid4
 import os
 
 from src.llm.main import run_curriculum_agent
-from src.llm.utils.helper_functions import load_json, append_response_json, extract
+from src.llm.utils import load_json, append_response_json
 
 
 BASE_DIR = "./chat_history/curriculum_agent"
@@ -18,13 +18,12 @@ def run_curriculum(user_id: str, topic_id: str):
     if chat_history:
         pass
     else:
-        response, tool_call = run_curriculum_agent(
+        response, _ = run_curriculum_agent(
             user_id=user_id, topic_id=topic_id, chat_history=chat_history
         )
         assistant_msg = {"role": "assistant", "content": response}
         chat_history.append(assistant_msg)
         append_response_json(path, assistant_msg)
-        # append_response_json(path, extract(tool_call))
         print(f"[AI]: {response}")
 
     while True:
@@ -36,13 +35,11 @@ def run_curriculum(user_id: str, topic_id: str):
             chat_history.append(user_msg)
             append_response_json(path, user_msg)
 
-        response, tool_call = run_curriculum_agent(
+        response, _ = run_curriculum_agent(
             user_id=user_id,
             topic_id=topic_id,
             chat_history=chat_history,
         )
-
-        # append_response_json(path, extract(tool_call))
 
         assistant_msg = {"role": "assistant", "content": response}
         chat_history.append(assistant_msg)
