@@ -47,148 +47,119 @@ def make_upsert_curriculum_tool(user_id: str, topic_id: str):
         user_summary: str,
     ):
         logger.info(
-            "Invoking upsert curriculum tool",
-            extra={
-                "topic": topic,
-                "chapter_number": chapter_number,
-                "chapter_title": chapter_title,
-            },
-        )
-
-        return upsert_curriculum(
-            user_id=user_id,
-            topic_id=topic_id,
-            topic=topic,
-            chapter_number=chapter_number,
-            chapter_title=chapter_title,
-            chapter_outline=chapter_outline,
-            user_summary=user_summary,
-        )
-
-    return Tool(
-        func=upsert_curriculum_tool,
-        description="Save or update a curriculum chapter based on the provided input.",
-        args_schema=UpsertCurriculumArgs,
-    )
-
-
-def upsert_curriculum(
-    user_id: str,
-    topic_id: str,
-    topic: str,
-    chapter_number: int,
-    chapter_title: str,
-    chapter_outline: str,
-    user_summary: str,
-) -> dict:
-    """
-    Save or update a curriculum topic and chapter.
-    """
-    logger.info(
-        "Starting curriculum upsert",
-        extra={
-            "user_id": user_id,
-            "topic_id": topic_id,
-            "chapter_number": chapter_number,
-        },
-    )
-
-    db = SessionLocal()
-    try:
-        user_uuid = UUID(user_id)
-        topic_uuid = UUID(topic_id)
-
-        logger.debug("Checking for existing topic")
-
-        existing_topic = (
-            db.query(Topic)
-            .filter(Topic.user_id == user_uuid, Topic.id == topic_uuid)
-            .first()
-        )
-
-        if existing_topic:
-            logger.info(
-                "Existing topic found, updating metadata",
-                extra={"topic_id": str(existing_topic.id)},
-            )
-            topic_uuid = existing_topic.id
-        else:
-            logger.info(
-                "Creating new topic",
-                extra={"topic_id": topic_id, "title": topic},
-            )
-            new_topic = Topic(
-                id=topic_uuid,
-                user_id=user_uuid,
-                title=topic,
-                user_summary=user_summary,
-            )
-            db.add(new_topic)
-
-        logger.debug("Checking for existing chapter")
-
-        existing_chapter = (
-            db.query(Chapter)
-            .filter(
-                Chapter.topic_id == topic_uuid,
-                Chapter.sequence == chapter_number,
-            )
-            .first()
-        )
-
-        if existing_chapter:
-            logger.info(
-                "Updating existing chapter",
-                extra={
-                    "chapter_sequence": chapter_number,
-                    "topic_id": str(topic_uuid),
-                },
-            )
-            existing_chapter.title = chapter_title
-            existing_chapter.outline = chapter_outline
-        else:
-            logger.info(
-                "Creating new chapter",
-                extra={
-                    "chapter_sequence": chapter_number,
-                    "topic_id": str(topic_uuid),
-                },
-            )
-            chapter = Chapter(
-                topic_id=topic_uuid,
-                title=chapter_title,
-                sequence=chapter_number,
-                outline=chapter_outline,
-            )
-            db.add(chapter)
-
-        db.commit()
-
-        logger.info(
-            "Curriculum upsert successful",
-            extra={
-                "topic_id": str(topic_uuid),
-                "chapter_number": chapter_number,
-            },
-        )
-
-        return {
-            "status": "success",
-            "message": "Curriculum saved successfully",
-        }
-
-    except Exception as e:
-        logger.exception(
-            "Failed to upsert curriculum",
+            "Starting curriculum upsert",
             extra={
                 "user_id": user_id,
                 "topic_id": topic_id,
                 "chapter_number": chapter_number,
             },
         )
-        db.rollback()
-        return {"status": "error", "reason": str(e)}
 
-    finally:
-        logger.debug("Closing database session")
-        db.close()
+        db = SessionLocal()
+        try:
+            user_uuid = UUID(user_id)
+            topic_uuid = UUID(topic_id)
+
+            logger.debug("Checking for existing topic")
+
+            existing_topic = (
+                db.query(Topic)
+                .filter(Topic.user_id == user_uuid, Topic.id == topic_uuid)
+                .first()
+            )
+
+            if existing_topic:
+                logger.info(
+                    "Existing topic found, updating metadata",
+                    extra={"topic_id": str(existing_topic.id)},
+                )
+                topic_uuid = existing_topic.id
+            else:
+                logger.info(
+                    "Creating new topic",
+                    extra={"topic_id": topic_id, "title": topic},
+                )
+                new_topic = Topic(
+                    id=topic_uuid,
+                    user_id=user_uuid,
+                    title=topic,
+                    status=Status.PENDING.value,
+                    user_summary=user_summary,
+                )
+                db.add(new_topic)
+
+            logger.debug("Checking for existing chapter")
+
+            existing_chapter = (
+                db.query(Chapter)
+                .filter(
+                    Chapter.topic_id == topic_uuid,
+                    Chapter.sequence == chapter_number,
+                )
+                .first()
+            )
+
+            if existing_chapter:
+                logger.info(
+                    "Updating existing chapter",
+                    extra={
+                        "chapter_sequence": chapter_number,
+                        "topic_id": str(topic_uuid),
+                    },
+                )
+                existing_chapter.title = chapter_title
+                existing_chapter.outline = chapter_outline
+            else:
+                logger.info(
+                    "Creating new chapter",
+                    extra={
+                        "chapter_sequence": chapter_number,
+                        "topic_id": str(topic_uuid),
+                    },
+                )
+                chapter = Chapter(
+                    topic_id=topic_uuid,
+                    title=chapter_title,
+                    sequence=chapter_number,
+                    status=Status.PENDING.value,
+                    outline=chapter_outline,
+                )
+                db.add(chapter)
+
+            db.commit()
+
+            logger.info(
+                "Curriculum upsert successful",
+                extra={
+                    "topic_id": str(topic_uuid),
+                    "chapter_number": chapter_number,
+                },
+            )
+
+            return {
+                "status": "success",
+                "message": "Curriculum saved successfully",
+            }
+
+        except Exception as e:
+            logger.exception(
+                "Failed to upsert curriculum",
+                extra={
+                    "user_id": user_id,
+                    "topic_id": topic_id,
+                    "chapter_number": chapter_number,
+                },
+            )
+            db.rollback()
+            return {"status": "error", "reason": str(e)}
+
+        finally:
+            logger.debug("Closing database session")
+            db.close()
+
+
+    return Tool(
+        func=upsert_curriculum_tool,
+        description="Save or update a curriculum chapter based on the provided input.",
+        args_schema=UpsertCurriculumArgs,
+    )
