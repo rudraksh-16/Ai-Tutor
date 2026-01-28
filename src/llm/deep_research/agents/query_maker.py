@@ -48,7 +48,11 @@ def query_node(state: ResearchState) -> ResearchState:
     ai_response, _ = query_agent.invoke(chat_history)
     logger.info("QueryMaker Agent invoke completed sucessfully")
     logger.info(f"Generated response {ai_response}")
-    plan = json.loads(ai_response)
+    try:
+        plan = json.loads(ai_response)
+    except json.JSONDecodeError:
+        logger.exception("Reviewer returned invalid JSON")
+        return state
     state["subtopics"] = plan["subtopics"]
     state["success_criteria"] = plan["success_criteria"]
     state["current_subtopic"] = plan["subtopics"][0]

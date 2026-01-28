@@ -26,7 +26,6 @@ class Reviewer(Agent):
                 current_subtopic=state["current_subtopic"],
                 current_coverage=state.get("covered_subtopics", {}),
                 scratchpad=state.get("scratchpad", ""),
-                previously_sufficient=state.get("previously_sufficient", []),
             ),
             model=model,
             temperature=temperature,
@@ -59,6 +58,9 @@ def reviewer_node(state: ResearchState) -> ResearchState:
         + data["scores"]["source_quality"]
         + data["scores"]["clarity"]
     ) / 4
+
+    state["approved"] = False
+
     if final_score > 0.70:
         state["approved"] = True
 
@@ -70,17 +72,13 @@ def reviewer_node(state: ResearchState) -> ResearchState:
     state["scores"] = data["scores"]
     state["final_score"] = final_score
     state["critique"] = data["critique"]
-
-    state["missing"] = data.get("missing")
-
-    state["improvement_instructions"] = data.get("improvement_instructions")
+    state["missing"] = data["missing"]
+    state["improvement_instructions"] = data["improvement_instructions"]
 
     state["reviewer_attempts"] = state.get("reviewer_attempts", 0) + 1
     if state["reviewer_attempts"] >= DeepResearchConstants.MAX_RETRIES:
         logger.warning("Reviewer max attempts reached; forcing approval")
         state["approved"] = True
-        state["missing"] = None
-        state["improvement_instructions"] = None
 
     if state["approved"]:
         state["missing"] = None

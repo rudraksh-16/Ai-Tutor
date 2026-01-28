@@ -92,25 +92,10 @@ class Researcher(Agent):
             logger.warning("No responses returned for subtopic: %s", subtopic)
             return
 
+        facts = extract_atomic_facts(responses, subtopic)
+
         existing_urls = {s["url"] for s in sources}
-
-        facts = []
-        for r in responses:
-            url = r.get("url")
-            content = r.get("content")
-            if not url or not content or url in existing_urls:
-                continue
-
-            facts.append(
-                {
-                    "content": content.strip(),
-                    "url": url,
-                    "source": r.get("source", "web"),
-                    "subtopic": subtopic,
-                    "query": query,
-                    "year": r.get("year"),
-                }
-            )
+        facts = [f for f in facts if f["url"] not in existing_urls]
 
         if not facts:
             return

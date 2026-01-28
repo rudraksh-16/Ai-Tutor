@@ -37,9 +37,6 @@ tavily_client = TavilyClient(api_key=LLMConfig.TAVILY_API_KEY)
 def web_search(query: str, max_results: int = 5) -> List[Dict]:
     """
     Production-safe web search using Tavily.
-    - Rate limited
-    - Logged
-    - Normalized output
     """
     logger.debug("Web search requested | query=%r | max_results=%d", query, max_results)
     rate_limiter.acquire()
