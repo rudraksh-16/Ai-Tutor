@@ -1,8 +1,16 @@
 from uuid import uuid4
+import os
 
 from src.llm.main import run_curriculum_agent
-from src.llm.curriculum_agent.utils.helper import get_file_path
-from src.llm.utils.load_file import load_json, append_response_json, extract
+from src.llm.utils import load_json, append_response_json
+
+
+BASE_DIR = "./chat_history/curriculum_agent"
+
+def get_file_path(user_id: str, topic_id: str) -> str:
+    user_dir = os.path.join(BASE_DIR, user_id)
+    os.makedirs(user_dir, exist_ok=True)
+    return os.path.join(user_dir, f"{topic_id}.json")
 
 def run_curriculum(user_id: str, topic_id: str):
     path = get_file_path(user_id, topic_id)
@@ -10,15 +18,12 @@ def run_curriculum(user_id: str, topic_id: str):
     if chat_history:
         pass
     else:
-        response, tool_call = run_curriculum_agent(
-            user_id=user_id,
-            topic_id=topic_id,
-            chat_history=chat_history
+        response, _ = run_curriculum_agent(
+            user_id=user_id, topic_id=topic_id, chat_history=chat_history
         )
         assistant_msg = {"role": "assistant", "content": response}
         chat_history.append(assistant_msg)
         append_response_json(path, assistant_msg)
-        append_response_json(path, extract(tool_call))
         print(f"[AI]: {response}")
 
     while True:
@@ -30,20 +35,17 @@ def run_curriculum(user_id: str, topic_id: str):
             chat_history.append(user_msg)
             append_response_json(path, user_msg)
 
-        response, tool_call = run_curriculum_agent(
+        response, _ = run_curriculum_agent(
             user_id=user_id,
             topic_id=topic_id,
             chat_history=chat_history,
         )
-
-        append_response_json(path, extract(tool_call))
 
         assistant_msg = {"role": "assistant", "content": response}
         chat_history.append(assistant_msg)
         append_response_json(path, assistant_msg)
 
         print(f"[AI]: {response}")
-
 
 
 def main():
@@ -55,3 +57,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
