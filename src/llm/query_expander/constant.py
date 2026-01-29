@@ -1,4 +1,4 @@
-class HydeConstants:
+class QueryExpanderConstants:
     DEFAULT_MODEL = "gpt-4.1-mini"
     DEFAULT_TEMPERATURE = 0.5
 
