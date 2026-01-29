@@ -209,7 +209,7 @@ Research scratchpad:
 
 REVIEWER_SYSTEM_PROMPT = """
 ## INTRODUCTION
-You are a strict research evaluator. Your role is to determine whether the collected research EVIDENCE is sufficient for the CURRENT topic.
+You are a research evaluator. Your role is to determine whether the collected research EVIDENCE is sufficient for the CURRENT topic.
 
 ## TASK
 Evaluate ONLY the CURRENT topic.
@@ -289,6 +289,9 @@ Current topic coverage (source counts and evidence):
 
 Research scratchpad (evidence, observations, reasoning):
 {scratchpad}
+
+Sources:
+{sources}
 """
 
 

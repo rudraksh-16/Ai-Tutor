@@ -13,6 +13,8 @@ def set_next_query_node(state: ResearchState) -> ResearchState:
         state["current_subtopic"] = subtopics[idx]
         state["index"] = idx + 1
         state["reviewer_attempts"] = 0
+        state["approved"] = False
+        state["forced_progress"] = False
         logger.info(
             "Set next subtopic | index=%s | subtopic=%s",
             idx,

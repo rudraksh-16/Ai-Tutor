@@ -26,6 +26,7 @@ class Reviewer(Agent):
                 current_subtopic=state["current_subtopic"],
                 current_coverage=state.get("covered_subtopics", {}),
                 scratchpad=state.get("scratchpad", ""),
+                sources=state.get("sources",[]),
             ),
             model=model,
             temperature=temperature,
@@ -49,25 +50,11 @@ def reviewer_node(state: ResearchState) -> ResearchState:
         data = json.loads(ai_response)
     except json.JSONDecodeError:
         logger.exception("Reviewer returned invalid JSON")
-        state["approved"] = False
         return state
 
-    final_score = (
-        data["scores"]["coverage"]
-        + data["scores"]["depth"]
-        + data["scores"]["source_quality"]
-        + data["scores"]["clarity"]
-    ) / 4
+    final_score = sum(data["scores"].values()) / 4
 
-    state["approved"] = False
-
-    if final_score > 0.70:
-        state["approved"] = True
-
-    logger.info("Reviewer approved: %s", state["approved"])
-    logger.info("Reviewer scores: %s", data["scores"])
-    logger.info("Reviewer missing feedback: %s", data.get("missing"))
-    logger.info("Reviewer final score: %s", final_score)
+    state["approved"] = final_score >= 0.65
 
     state["scores"] = data["scores"]
     state["final_score"] = final_score
@@ -75,10 +62,12 @@ def reviewer_node(state: ResearchState) -> ResearchState:
     state["missing"] = data["missing"]
     state["improvement_instructions"] = data["improvement_instructions"]
 
+    logger.info(f"final_score: {final_score}")
+    logger.info(f"Approved: {state["approved"]}")
+    
     state["reviewer_attempts"] = state.get("reviewer_attempts", 0) + 1
     if state["reviewer_attempts"] >= DeepResearchConstants.MAX_RETRIES:
-        logger.warning("Reviewer max attempts reached; forcing approval")
-        state["approved"] = True
+        state["forced_progress"] = True
 
     if state["approved"]:
         state["missing"] = None
@@ -86,8 +75,7 @@ def reviewer_node(state: ResearchState) -> ResearchState:
 
     return state
 
-
 def route_after_reviewer(state: ResearchState) -> str:
-    if not state.get("approved"):
-        return "researcher"
-    return "set_next_query"
+    if state.get("approved") or state.get("forced_progress"):
+        return "set_next_query"
+    return "researcher"

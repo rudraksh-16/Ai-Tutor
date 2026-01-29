@@ -2,9 +2,11 @@ import logging
 
 from src.llm.deep_research.state import ResearchState
 from src.llm.deep_research.prompt import REACT_SYSTEM_PROMPT, REACT_HUMAN_PROMPT
-from src.llm.agent_core.agent import Agent
 from src.llm.deep_research.tools.web_search import make_web_search_tool
 from src.llm.deep_research.constant import DeepResearchConstants
+from src.llm.agent_core.agent import Agent
+from src.llm.hyde.agent import run_hyde
+from src.llm.config import LLMConfig
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,18 @@ class Researcher(Agent):
         current = state.get("current_subtopic")
         if not current:
             raise ValueError("Researcher invoked without current_subtopic")
+        
+        base_query = f"{state['query']} - {current}"
+        hyde_hypothesis = None
+
+        if LLMConfig.USE_HYDE:
+            hyde_hypothesis = run_hyde(
+                query=base_query,
+                extra=state.get("success_criteria", {})
+            )
+
+        query = base_query if hyde_hypothesis is None else f"{base_query} \n\n {hyde_hypothesis}"
+        logger.info(f"Researcher query: {query}")
 
         super().__init__(
             system_prompt=REACT_SYSTEM_PROMPT,
@@ -66,6 +80,7 @@ class Researcher(Agent):
         sources = self.state.setdefault("sources", [])
         covered = self.state.setdefault("covered_subtopics", {})
         search_count = self.state.setdefault("search_count", {})
+        search_exhausted = set(self.state.get("search_exhausted", []))
 
         executed = set(self.state.setdefault("executed_searches", []))
 
@@ -82,7 +97,17 @@ class Researcher(Agent):
         count = search_count.get(subtopic, 0)
         if count >= 5:
             logger.warning("Max searches reached for subtopic: %s", subtopic)
+            search_exhausted.add(subtopic)
+            self.state["search_exhausted"] = list(search_exhausted)
+
+            scratchpad += (
+                f"\n[INFO] Max search limit reached for subtopic: {subtopic}. "
+                "Proceeding with available evidence."
+            )
+
+            self.state["scratchpad"] = scratchpad
             return
+        
         search_count[subtopic] = count + 1
 
         payload = result.get("results", {})
@@ -123,6 +148,15 @@ class Researcher(Agent):
 
 
 def research_node(state: ResearchState) -> ResearchState:
+
+    current = state.get("current_subtopic")
+
+    if current in state.get("search_exhausted", []):
+        logger.info(
+            "Skipping Researcher: subtopic '%s' search already exhausted",
+            current,
+        )
+        return state
 
     research_agent = Researcher(
         state=state,
