@@ -4,7 +4,7 @@ from src.llm.deep_research.state import ResearchState
 from src.llm.deep_research.prompt import REACT_SYSTEM_PROMPT, REACT_HUMAN_PROMPT
 from src.llm.agent_core.agent import Agent
 from src.llm.deep_research.tools.web_search import make_web_search_tool
-from src.llm.query_expander.query_expander import expand_query
+from src.llm.query_expander import expand_query
 from src.llm.config import LLMConfig
 from src.llm.deep_research.constant import DeepResearchConstants
 
