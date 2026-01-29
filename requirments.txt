@@ -6,3 +6,6 @@ psycopg2-binary==2.9.11
 
 # LLM
 openai==2.14.0
+langgraph==1.0.5
+tavily==1.1.0
+dotenv==0.9.9
