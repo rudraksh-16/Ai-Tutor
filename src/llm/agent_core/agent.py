@@ -1,6 +1,7 @@
 import json
 from openai import OpenAI
 from typing import List, Optional
+from openai import AsyncOpenAI
 from src.llm.config import LLMConfig
 from src.llm.agent_core.constant import Constants
 from src.llm.agent_core.tool import Tool
@@ -18,6 +19,7 @@ class Agent:
         max_tool_call: int = Constants.DEFAULT_MAX_TOOL_CALLS,
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
+        self.client_async = AsyncOpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.system_prompt = system_prompt
         self.user_prompt = user_prompt
         self.model = model
@@ -186,6 +188,78 @@ class Agent:
                             tool_args_buffer = ""
 
                     #  Response finished
+                    elif event.type == "response.completed":
+                        yield {
+                            "type": "final",
+                            "data": {
+                                "assistant_text": final_text,
+                                "tool_calls": tool_calls,
+                            },
+                        }
+
+    def _call_llm_astream(self, chat_history: List[dict]):
+        return self.client_async.responses.stream(
+            model=self.model,
+            temperature=self.temperature,
+            input=chat_history,
+            tools=[tool.schema() for tool in self.tools.values()],
+            tool_choice="auto",
+        )
+   
+    
+    async def astream(self, chat_history):
+        chat_history = self._format_chat_history(chat_history)
+        tool_calls = []
+        final_text = ""
+
+        for _ in range(self.max_iteration):
+            if final_text or len(tool_calls) >= self.max_tool_call:
+                break
+
+            current_tool = None
+            tool_args_buffer = ""
+
+            async with self._call_llm_astream(chat_history) as stream:
+                async for event in stream:
+                    if event.type == "response.output_text.delta":
+                        final_text += event.delta
+                        yield {"type": "text", "data": event.delta}
+
+                    elif event.type == "response.output_item.added":
+                        if getattr(event.item, "type", None) == "function_call":
+                            current_tool = {
+                                "name": event.item.name,
+                                "call_id": event.item.call_id,
+                            }
+                            tool_args_buffer = ""
+
+                    elif event.type == "response.function_call_arguments.delta":
+                        tool_args_buffer += event.delta or ""
+
+                    elif event.type == "response.function_call_arguments.done":
+                        args = json.loads(tool_args_buffer or "{}")
+                        result = self._execute_tool(current_tool["name"], args)
+
+                        tool_input = {
+                            "type": "function_call",
+                            "name": current_tool["name"],
+                            "arguments": tool_args_buffer,
+                            "call_id": current_tool["call_id"],
+                        }
+
+                        tool_output = {
+                            "type": "function_call_output",
+                            "call_id": current_tool["call_id"],
+                            "output": json.dumps(result),
+                        }
+
+                        chat_history.append(tool_input)
+                        chat_history.append(tool_output)
+
+                        tool_calls.append({"input": tool_input, "output": tool_output})
+
+                        yield {"type": "tool_call", "data": tool_calls[-1]}
+
                     elif event.type == "response.completed":
                         yield {
                             "type": "final",
