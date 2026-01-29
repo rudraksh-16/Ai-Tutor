@@ -1,7 +1,6 @@
 import json
 from openai import OpenAI
 from typing import List, Optional
-
 from src.llm.config import LLMConfig
 from src.llm.agent_core.constant import Constants
 from src.llm.agent_core.tool import Tool
@@ -16,11 +15,9 @@ class Agent:
         model: str = Constants.DEFAULT_MODEL,
         temperature: float = Constants.DEFAULT_TEMPERATURE,
         max_iteration: int = Constants.DEFAULT_MAX_ITERATION,
-        max_tool_call : int = Constants.MAX_TOOL_CALLS,
-
+        max_tool_call: int = Constants.MAX_TOOL_CALLS,
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
-
         self.system_prompt = system_prompt
         self.user_prompt = user_prompt
         self.model = model
@@ -40,14 +37,16 @@ class Agent:
             return self.tools[name].execute(**args)
         return self.tools[name].execute()
 
-    def _call_llm(self, chat_history: List[dict]):
+    def _call_llm(self, chat_history: List[dict], stream: bool = False):
         return self.client.responses.create(
             model=self.model,
             temperature=self.temperature,
             input=chat_history,
             tools=[tool.schema() for tool in self.tools.values()],
             tool_choice="auto",
+            stream=stream,
         )
+
 
     def _format_chat_history(self, user_input: list[dict]) -> List[dict]:
         history = [
@@ -106,16 +105,8 @@ class Agent:
                 return assistant_text, tool_calls
 
         return Constants.ERROR_GENERIC, tool_calls
-
-    def _call_llm_stream(self, chat_history: List[dict]):
-        return self.client.responses.create(
-            model=self.model,
-            temperature=self.temperature,
-            input=chat_history,
-            tools=[tool.schema() for tool in self.tools.values()],
-            tool_choice="auto",
-            stream=True,
-        )
+    
+    
 
     def stream(self, chat_history):
         chat_history = self._format_chat_history(chat_history)
@@ -129,7 +120,7 @@ class Agent:
             current_tool = None
             tool_args_buffer = ""
 
-            with self._call_llm_stream(chat_history) as stream:
+            with self._call_llm(chat_history=chat_history,stream=True) as stream:
                 for event in stream:
                     #  Normal text streaming
                     if event.type == "response.output_text.delta":
@@ -147,11 +138,9 @@ class Agent:
                             }
                             tool_args_buffer = ""
 
-
                     #  Tool arguments streaming
                     elif event.type == "response.function_call_arguments.delta":
                         tool_args_buffer += event.delta or ""
-                        
 
                     #  IMPLICIT tool completion
                     elif event.type == "response.function_call_arguments.done":
@@ -201,7 +190,7 @@ class Agent:
                         yield {
                             "type": "final",
                             "data": {
-                                "assistant_test": final_text,
+                                "assistant_text": final_text,
                                 "tool_calls": tool_calls,
                             },
                         }
