@@ -2,14 +2,13 @@ import logging
 
 from src.llm.deep_research.state import ResearchState
 from src.llm.deep_research.prompt import REACT_SYSTEM_PROMPT, REACT_HUMAN_PROMPT
-from src.llm.deep_research.tools.web_search import make_web_search_tool
-from src.llm.deep_research.constant import DeepResearchConstants
 from src.llm.agent_core.agent import Agent
-from src.llm.hyde.agent import run_hyde
+from src.llm.deep_research.tools.web_search import make_web_search_tool
+from src.llm.query_expander.query_expander import expand_query
 from src.llm.config import LLMConfig
+from src.llm.deep_research.constant import DeepResearchConstants
 
 logger = logging.getLogger(__name__)
-
 
 class Researcher(Agent):
     def __init__(
@@ -42,23 +41,22 @@ class Researcher(Agent):
         current = state.get("current_subtopic")
         if not current:
             raise ValueError("Researcher invoked without current_subtopic")
-        
-        base_query = f"{state['query']} - {current}"
-        hyde_hypothesis = None
 
-        if LLMConfig.USE_HYDE:
-            hyde_hypothesis = run_hyde(
+        base_query = f"{state['query']} - {current}"
+        expanded_query = None
+
+        if LLMConfig.ENABLE_QUERY_EXPANSION:
+            expanded_query = expand_query(
                 query=base_query,
                 extra=state.get("success_criteria", {})
             )
 
-        query = base_query if hyde_hypothesis is None else f"{base_query} \n\n {hyde_hypothesis}"
-        logger.info(f"Researcher query: {query}")
-
+        query = base_query if expanded_query is None else expanded_query
+        logger.info(f"{query}")
         super().__init__(
             system_prompt=REACT_SYSTEM_PROMPT,
             user_prompt=REACT_HUMAN_PROMPT.format(
-                query=state["query"],
+                query=query,
                 topic=current,
                 subtopics=state.get("subtopics", []),
                 missing=missing,
@@ -97,6 +95,7 @@ class Researcher(Agent):
         count = search_count.get(subtopic, 0)
         if count >= 5:
             logger.warning("Max searches reached for subtopic: %s", subtopic)
+
             search_exhausted.add(subtopic)
             self.state["search_exhausted"] = list(search_exhausted)
 
@@ -107,7 +106,6 @@ class Researcher(Agent):
 
             self.state["scratchpad"] = scratchpad
             return
-        
         search_count[subtopic] = count + 1
 
         payload = result.get("results", {})
@@ -170,7 +168,6 @@ def research_node(state: ResearchState) -> ResearchState:
     _, _ = research_agent.invoke(chat_history)
     logger.info("Researcher Agent invoke completed sucessfully")
     return state
-
 
 def extract_atomic_facts(results: list, subtopic: str) -> list[dict]:
     facts = []

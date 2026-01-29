@@ -8,7 +8,6 @@ from src.llm.deep_research.prompt import REVIEWER_SYSTEM_PROMPT, REVIEWER_USER_P
 
 logger = logging.getLogger(__name__)
 
-
 class Reviewer(Agent):
     def __init__(
         self,
@@ -26,7 +25,7 @@ class Reviewer(Agent):
                 current_subtopic=state["current_subtopic"],
                 current_coverage=state.get("covered_subtopics", {}),
                 scratchpad=state.get("scratchpad", ""),
-                sources=state.get("sources",[]),
+                sources=state.get("sources",[])
             ),
             model=model,
             temperature=temperature,
