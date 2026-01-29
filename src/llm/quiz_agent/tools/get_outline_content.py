@@ -32,6 +32,4 @@ def make_get_outline_content(chapter_id: str, sequence: int):
     )
 
 
-def get_outline_content(sequence: int, chapter_id: str) -> str:
-    """Load outline content by outline sequence and chapter id."""
     

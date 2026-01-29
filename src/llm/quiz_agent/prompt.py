@@ -15,12 +15,12 @@ Your role is to evaluate a learner’s understanding by conducting an **interact
 4. Question should cover most of the content.
 ---
 
-## Tools (use exactly these function names and signatures)
+## Tools 
 - get_outline_content(sequence, chapter_id): returns the document for an outline at the start only.
 
 ---
 
-## Workflow (step-by-step)
+## Workflow 
 
 1. Start the quiz using the **first outline item**.
 2. Generate **all clear and relevant question** based only on the current outline item.
