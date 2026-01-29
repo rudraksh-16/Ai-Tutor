@@ -15,7 +15,7 @@ class Agent:
         model: str = Constants.DEFAULT_MODEL,
         temperature: float = Constants.DEFAULT_TEMPERATURE,
         max_iteration: int = Constants.DEFAULT_MAX_ITERATION,
-        max_tool_call: int = Constants.MAX_TOOL_CALLS,
+        max_tool_call: int = Constants.DEFAULT_MAX_TOOL_CALLS,
     ):
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.system_prompt = system_prompt
