@@ -197,8 +197,8 @@ class Agent:
                             },
                         }
 
-    def _call_llm_async(self, chat_history: List[dict],stream: bool = False):
-        return self.client_async.responses.create(
+    async def _call_llm_async(self, chat_history: List[dict],stream: bool = False):
+        return await self.client_async.responses.create(
             model=self.model,
             temperature=self.temperature,
             input=chat_history,
