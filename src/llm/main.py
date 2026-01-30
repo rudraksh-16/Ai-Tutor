@@ -20,7 +20,6 @@ from src.llm.planner.constant import PlannerConstants
 
 
 def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
-
     agent = CurriculumAgent(
         user_id=user_id,
         topic_id=topic_id,
@@ -29,14 +28,10 @@ def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
         max_iteration=CurriculumConstants.MAX_ITERATION,
     )
     agent.add_tool(make_upsert_curriculum_tool(user_id, topic_id))
-
     agent.add_tool(make_get_curriculum_tool(topic_id))
-
     agent.add_tool(make_web_search_tool())
-    
-    ai_response, tool_call = agent.invoke(chat_history)
-
-    return ai_response, tool_call
+    ai_response = agent.stream(chat_history)
+    return ai_response
 
 
 def run_planner(topic_id: str):
