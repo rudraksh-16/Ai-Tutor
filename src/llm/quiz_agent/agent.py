@@ -1,14 +1,15 @@
-from src.llm.teacher_agent.constant import TeacherConstants
-from src.llm.teacher_agent.prompt import SYSTEM_PROMPT, USER_PROMPT
+from src.llm.quiz_agent.constant import QuizConstants
+from src.llm.quiz_agent.prompt import SYSTEM_PROMPT, USER_PROMPT
 from src.llm.agent_core.agent import Agent
 
-class TeacherAgent(Agent):
+
+class QuizAgent(Agent):
     def __init__(
         self,
         chapter_id: str,
-        model: str = TeacherConstants.DEFAULT_MODEL_NAME,
-        temperature: float = TeacherConstants.DEFAULT_MODEL_TEMPERATURE,
-        max_iteration: int = TeacherConstants.DEFAULT_MAX_ITERATION,
+        model: str = QuizConstants.DEFAULT_MODEL_NAME,
+        temperature: float = QuizConstants.DEFAULT_MODEL_TEMPERATURE,
+        max_iteration: int = QuizConstants.DEFAULT_MAX_ITERATION,
     ):
         super().__init__(
             system_prompt=SYSTEM_PROMPT,
@@ -18,5 +19,3 @@ class TeacherAgent(Agent):
             max_iteration=max_iteration,
         )
         self.chapter_id = chapter_id
-
-    
