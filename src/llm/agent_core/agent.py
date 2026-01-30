@@ -197,13 +197,14 @@ class Agent:
                             },
                         }
 
-    def _call_llm_astream(self, chat_history: List[dict]):
-        return self.client_async.responses.stream(
+    def _call_llm_async(self, chat_history: List[dict],stream: bool = False):
+        return self.client_async.responses.create(
             model=self.model,
             temperature=self.temperature,
             input=chat_history,
             tools=[tool.schema() for tool in self.tools.values()],
             tool_choice="auto",
+            stream=stream
         )
    
     
@@ -219,7 +220,7 @@ class Agent:
             current_tool = None
             tool_args_buffer = ""
 
-            async with self._call_llm_astream(chat_history) as stream:
+            async with self._call_llm_async(chat_history=chat_history,stream=True) as stream:
                 async for event in stream:
                     if event.type == "response.output_text.delta":
                         final_text += event.delta
