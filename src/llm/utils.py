@@ -35,7 +35,7 @@ def extract(tool_results):
     return result
 
 
-def add_message( final_data):
+def add_message(final_data):
     chat_history = []
     tools = extract(final_data["tool_calls"])
     if final_data["assistant_text"].strip():
