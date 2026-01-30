@@ -28,6 +28,21 @@ def append_response_json(file_path: str, new_item):
 def extract(tool_results):
     result = []
     for tool in tool_results:
+        if tool["input"]["name"] == "get_user_curriculum_tool":
+            continue
         result.append(tool["input"])
         result.append(tool["output"])
     return result
+
+
+def add_message( final_data):
+    chat_history = []
+    tools = extract(final_data["tool_calls"])
+    if final_data["assistant_text"].strip():
+        assistant = {"role": "assistant", "content": final_data["assistant_text"]}
+        tools.append(assistant)
+    if isinstance(tools, list):
+        chat_history.extend(tools)
+    else:
+        chat_history.append(tools)
+    return chat_history
