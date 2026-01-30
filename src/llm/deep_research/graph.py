@@ -39,6 +39,4 @@ graph.add_conditional_edges(
     },
 )
 graph.add_edge("synthesizer", END)
-
 app = graph.compile()
-print(app)
