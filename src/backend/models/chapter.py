@@ -17,6 +17,7 @@ class Chapter(BaseModel):
     status = Column(
         Enum(Status, values_callable=lambda e: [member.value for member in e]),
         nullable=False,
+        default=Status.PENDING.value,
     )
     outline = Column(Text, nullable=False)
 
