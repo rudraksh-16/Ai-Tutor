@@ -1,6 +1,3 @@
-
-import json
-
 from src.llm.curriculum_agent.agent import CurriculumAgent
 from src.llm.curriculum_agent.constant import CurriculumConstants
 from src.llm.curriculum_agent.tools.upsert_curriculum import make_upsert_curriculum_tool
@@ -9,11 +6,6 @@ from src.llm.curriculum_agent.tools.web_search import make_web_search_tool
 
 from src.llm.teacher_agent.agent import TeacherAgent
 from src.llm.teacher_agent.constant import TeacherConstants
-from src.llm.teacher_agent.tools.get_outline_content import make_get_outline_content
-from src.llm.teacher_agent.tools.get_user_curriculum import make_get_user_curriculum
-from src.llm.teacher_agent.tools.get_chapter import make_get_chapter
-from src.llm.teacher_agent.tools.update_status import make_update_status
-from src.llm.teacher_agent.tools.create_quiz import make_create_quiz
 
 from src.llm.planner.chapter_planner import Planner
 from src.llm.planner.constant import PlannerConstants
@@ -44,20 +36,15 @@ def run_planner(topic_id: str):
     plan.invoke()
 
 
-def run_teacher_agent(chapter_id, chat_history):
+def run_teacher_agent(chapter_id, chat_history, user_message):
     agent = TeacherAgent(
         chapter_id=chapter_id,
         model=TeacherConstants.MODEL_NAME,
         max_iteration=TeacherConstants.MAX_ITERATION,
         temperature=TeacherConstants.MODEL_TEMPERATURE,
     )
-    agent.add_tool(make_get_user_curriculum(chapter_id))
-    agent.add_tool(make_get_chapter(chapter_id))
-    agent.add_tool(make_get_outline_content(chapter_id))
-    agent.add_tool(make_update_status(chapter_id))
-    agent.add_tool(make_create_quiz(chapter_id))
-
-    result = agent.stream(chat_history)
-    return result
-
-
+    try:
+        for event in agent.run(chat_history=chat_history, user_message=user_message):
+            yield event
+    except Exception as e:
+        raise e
