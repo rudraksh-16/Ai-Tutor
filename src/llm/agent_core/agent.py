@@ -12,7 +12,6 @@ class Agent:
     def __init__(
         self,
         system_prompt: str,
-        user_prompt: str = None,
         model: str = Constants.DEFAULT_MODEL,
         temperature: float = Constants.DEFAULT_TEMPERATURE,
         max_iteration: int = Constants.DEFAULT_MAX_ITERATION,
@@ -21,7 +20,6 @@ class Agent:
         self.client = OpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.client_async = AsyncOpenAI(api_key=LLMConfig.OPENAI_API_KEY)
         self.system_prompt = system_prompt
-        self.user_prompt = user_prompt
         self.model = model
         self.temperature = temperature
         self.max_iteration = max_iteration
@@ -49,22 +47,20 @@ class Agent:
             stream=stream,
         )
 
-
-    def _format_chat_history(self, user_input: list[dict]) -> List[dict]:
+    def _format_chat_history(self, chat_history: list[dict]) -> List[dict]:
         history = [
             {"role": "system", "content": self.system_prompt},
         ]
-        if self.user_prompt:
-            history.append({"role": "user", "content": self.user_prompt})
-
-        if isinstance(user_input, list):
-            history.extend(user_input)
+        if isinstance(chat_history, list):
+            history.extend(chat_history)
         else:
-            history.append(user_input)
+            history.append(chat_history)
 
         return history
 
-    def invoke(self, chat_history):
+    def invoke(self, chat_history=None):
+        if chat_history is None:
+            chat_history = []
         chat_history = self._format_chat_history(chat_history)
         tool_calls = []
 
@@ -107,10 +103,10 @@ class Agent:
                 return assistant_text, tool_calls
 
         return Constants.ERROR_GENERIC, tool_calls
-    
-    
 
-    def stream(self, chat_history):
+    def stream(self, chat_history=None):
+        if chat_history is None:
+            chat_history = []
         chat_history = self._format_chat_history(chat_history)
         tool_calls = []
         final_text = ""
@@ -122,7 +118,7 @@ class Agent:
             current_tool = None
             tool_args_buffer = ""
 
-            with self._call_llm(chat_history=chat_history,stream=True) as stream:
+            with self._call_llm(chat_history=chat_history, stream=True) as stream:
                 for event in stream:
                     #  Normal text streaming
                     if event.type == "response.output_text.delta":
@@ -197,18 +193,19 @@ class Agent:
                             },
                         }
 
-    async def _call_llm_async(self, chat_history: List[dict],stream: bool = False):
+    async def _call_llm_async(self, chat_history: List[dict], stream: bool = False):
         return await self.client_async.responses.create(
             model=self.model,
             temperature=self.temperature,
             input=chat_history,
             tools=[tool.schema() for tool in self.tools.values()],
             tool_choice="auto",
-            stream=stream
+            stream=stream,
         )
-   
-    
+
     async def astream(self, chat_history):
+        if chat_history is None:
+            chat_history = []
         chat_history = self._format_chat_history(chat_history)
         tool_calls = []
         final_text = ""
@@ -220,7 +217,9 @@ class Agent:
             current_tool = None
             tool_args_buffer = ""
 
-            async with self._call_llm_async(chat_history=chat_history,stream=True) as stream:
+            async with self._call_llm_async(
+                chat_history=chat_history, stream=True
+            ) as stream:
                 async for event in stream:
                     if event.type == "response.output_text.delta":
                         final_text += event.delta
