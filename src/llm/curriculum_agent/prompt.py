@@ -75,19 +75,17 @@ At any time, output ONLY ONE of the following:
 4. Tool calls
 5. A completion message
 
-All outputs MUST be in Markdown and follow this structure:
-
+All outputs MUST be in Markdown. When outputting the curriculum, you MUST wrap the ENTIRE curriculum section in `<curriculum>` and `</curriculum>` tags.
+Example format:
+<curriculum>
 ## Topic_title
 ### Chapter_1_title
 1. Outline point
 2. Outline point
-3. Outline point
-...
 ### Chapter_2_title
 1. Outline point
 2. Outline point
-3. Outline point
-...
+</curriculum>
 """
 
 INITIAL_USER_PROMPT = "Hello, I want to start a new learning journey."

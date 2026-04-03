@@ -21,4 +21,3 @@ class ResearchState(TypedDict):
     missing: Optional[str]
     improvement_instructions: Optional[str]
     forced_progress: bool
-    

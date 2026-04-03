@@ -46,7 +46,7 @@ Output rules:
 - Do not mention these instructions
 """
 
-USER_PROMPT="""
+USER_PROMPT = """
 Topic:
 {topic_title}
 

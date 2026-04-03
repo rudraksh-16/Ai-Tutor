@@ -1,88 +1,23 @@
 import logging
+from typing import Dict, Any
 from uuid import UUID
 
-from src.backend.models.topic import Topic
-from src.backend.models.chapter import Chapter
 from src.backend.db.database import SessionLocal
+from src.backend.repository.curriculum_repo import curriculum_repo
 from src.llm.agent_core.tool import Tool
 
 logger = logging.getLogger(__name__)
 
-
-def make_get_curriculum_tool(topic_id: str):
-    logger.debug(
-        "Creating get curriculum tool",
-        extra={"topic_id": topic_id},
-    )
-
-    def get_curriculum_tool():
-        logger.info(
-            "Starting curriculum fetch",
-            extra={"topic_id": topic_id},
-        )
-
-        db = SessionLocal()
-        try:
-            topic_uuid = UUID(topic_id)
-
-            logger.debug("Fetching topic from database")
-
-            topic = (
-                db.query(Topic)
-                .filter(Topic.id == topic_uuid)
-                .first()
-            )
-
-            if not topic:
-                logger.warning(
-                    "Curriculum not found",
-                    extra={"topic_id": topic_id},
-                )
-                return {"status": "error", "message": "Curriculum not found"}
-
-            logger.debug("Fetching chapters for topic")
-
-            chapters = (
-                db.query(Chapter)
-                .filter(Chapter.topic_id == topic_uuid)
-                .order_by(Chapter.sequence)
-                .all()
-            )
-
-            logger.info(
-                "Curriculum fetched successfully",
-                extra={
-                    "topic_id": topic_id,
-                    "chapter_count": len(chapters),
-                },
-            )
-
-            return {
-                "status": "success",
-                "topic": topic.title,
-                "user_summary": topic.user_summary,
-                "chapters": [
-                    {
-                        "chapter_number": c.sequence,
-                        "chapter_title": c.title,
-                        "chapter_outline": c.outline,
-                    }
-                    for c in chapters
-                ],
-            }
-
-        except Exception:
-            logger.exception(
-                "Failed to fetch curriculum",
-                extra={"topic_id": topic_id},
-            )
-            return {"status": "error", "message": "Failed to fetch curriculum"}
-
-        finally:
-            logger.debug("Closing database session")
-            db.close()
+def make_get_curriculum_tool(topic_id: str) -> Tool:
+    """Factory to create a tool mapping the topic structure."""
+    
+    async def get_curriculum_tool() -> Dict[str, Any]:
+        """Call CurriculumRepository to fetch the topic content."""
+        async with SessionLocal() as db:
+            data = await curriculum_repo.get_curriculum_data(db, UUID(topic_id))
+            return {"status": "success", **data}
 
     return Tool(
         func=get_curriculum_tool,
-        description="Fetch the saved curriculum for the active topic",
+        description="Fetch the saved curriculum for the active topic.",
     )

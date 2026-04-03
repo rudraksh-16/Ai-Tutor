@@ -8,6 +8,7 @@ from src.llm.deep_research.prompt import REVIEWER_SYSTEM_PROMPT, REVIEWER_USER_P
 
 logger = logging.getLogger(__name__)
 
+
 class Reviewer(Agent):
     def __init__(
         self,
@@ -25,7 +26,7 @@ class Reviewer(Agent):
                 current_subtopic=state["current_subtopic"],
                 current_coverage=state.get("covered_subtopics", {}),
                 scratchpad=state.get("scratchpad", ""),
-                sources=state.get("sources",[])
+                sources=state.get("sources", []),
             ),
             model=model,
             temperature=temperature,
@@ -36,43 +37,61 @@ class Reviewer(Agent):
 
 
 def reviewer_node(state: ResearchState) -> ResearchState:
-    reviewer_agent = Reviewer(
+    """Orchestrate the review process for the current research findings."""
+    reviewer = Reviewer(
         state=state,
         model=DeepResearchConstants.MODEL,
         temperature=DeepResearchConstants.TEMPERATURE,
         max_iteration=DeepResearchConstants.MAX_RETRIES,
     )
 
-    ai_response, _ = reviewer_agent.invoke([])
-
-    try:
-        data = json.loads(ai_response)
-    except json.JSONDecodeError:
-        logger.exception("Reviewer returned invalid JSON")
+    ai_response, _ = reviewer.invoke([])
+    data = _parse_reviewer_response(ai_response)
+    if not data:
         return state
 
-    final_score = sum(data["scores"].values()) / 4
-
-    state["approved"] = final_score >= 0.65
-
-    state["scores"] = data["scores"]
-    state["final_score"] = final_score
-    state["critique"] = data["critique"]
-    state["missing"] = data["missing"]
-    state["improvement_instructions"] = data["improvement_instructions"]
-
-    logger.info(f"final_score: {final_score}")
-    logger.info(f"Approved: {state["approved"]}")
+    _apply_reviewer_results(state, data)
+    _handle_reviewer_attempts(state)
     
-    state["reviewer_attempts"] = state.get("reviewer_attempts", 0) + 1
-    if state["reviewer_attempts"] >= DeepResearchConstants.MAX_RETRIES:
-        state["forced_progress"] = True
+    return state
+
+
+def _parse_reviewer_response(ai_response: str) -> dict:
+    """Safely parse the JSON response from the reviewer agent."""
+    try:
+        return json.loads(ai_response)
+    except json.JSONDecodeError:
+        logger.exception("Reviewer returned invalid JSON")
+        return {}
+
+
+def _apply_reviewer_results(state: ResearchState, data: dict) -> None:
+    """Update the research state based on reviewer feedback scores."""
+    scores = data.get("scores", {})
+    final_score = sum(scores.values()) / max(len(scores), 1)
+    
+    state["scores"] = scores
+    state["final_score"] = final_score
+    state["approved"] = final_score >= 0.65
+    state["critique"] = data.get("critique")
+    state["missing"] = data.get("missing")
+    state["improvement_instructions"] = data.get("improvement_instructions")
 
     if state["approved"]:
         state["missing"] = None
         state["improvement_instructions"] = None
+    
+    logger.info("Review completed | score: %.2f | approved: %s", 
+                final_score, state["approved"])
 
-    return state
+
+def _handle_reviewer_attempts(state: ResearchState) -> None:
+    """Track review attempts and force progress if limit reached."""
+    attempts = state.get("reviewer_attempts", 0) + 1
+    state["reviewer_attempts"] = attempts
+    if attempts >= DeepResearchConstants.MAX_RETRIES:
+        state["forced_progress"] = True
+
 
 def route_after_reviewer(state: ResearchState) -> str:
     if state.get("approved") or state.get("forced_progress"):

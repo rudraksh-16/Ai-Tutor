@@ -3,15 +3,13 @@ from src.llm.curriculum_agent.constant import CurriculumConstants
 from src.llm.curriculum_agent.tools.upsert_curriculum import make_upsert_curriculum_tool
 from src.llm.curriculum_agent.tools.get_curriculum import make_get_curriculum_tool
 from src.llm.curriculum_agent.tools.web_search import make_web_search_tool
-
 from src.llm.teacher_agent.agent import TeacherAgent
 from src.llm.teacher_agent.constant import TeacherConstants
-
 from src.llm.planner.chapter_planner import Planner
 from src.llm.planner.constant import PlannerConstants
 
 
-def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
+async def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
     agent = CurriculumAgent(
         user_id=user_id,
         topic_id=topic_id,
@@ -22,29 +20,27 @@ def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
     agent.add_tool(make_upsert_curriculum_tool(user_id, topic_id))
     agent.add_tool(make_get_curriculum_tool(topic_id))
     agent.add_tool(make_web_search_tool())
-    ai_response = agent.stream(chat_history)
-    return ai_response
+    async for event in agent.astream(chat_history):
+        yield event
 
 
-def run_planner(topic_id: str):
-    plan = Planner(
+async def run_planner(topic_id: str, on_progress=None):
+    planner = Planner(
         topic_id=topic_id,
         temperature=PlannerConstants.TEMPERATURE,
         model=PlannerConstants.MODEL,
         max_retries=PlannerConstants.MAX_RETRIES,
     )
-    plan.invoke()
+    await planner.invoke(on_progress=on_progress)
 
 
-def run_teacher_agent(chapter_id, chat_history, user_message):
+async def run_teacher_agent(chapter_id: str, chat_history: list):
+    """Create and stream a TeacherAgent. chat_history already contains user message."""
     agent = TeacherAgent(
         chapter_id=chapter_id,
-        model=TeacherConstants.MODEL_NAME,
+        model=TeacherConstants.MODEL,
         max_iteration=TeacherConstants.MAX_ITERATION,
-        temperature=TeacherConstants.MODEL_TEMPERATURE,
+        temperature=TeacherConstants.TEMPERATURE,
     )
-    try:
-        for event in agent.run(chat_history=chat_history, user_message=user_message):
-            yield event
-    except Exception as e:
-        raise e
+    async for event in agent.run(chat_history=chat_history):
+        yield event

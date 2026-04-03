@@ -1,7 +1,4 @@
 class QuizConstants:
-    DEFAULT_MODEL_NAME = "gpt-4.1-mini"
-    DEFAULT_MODEL_TEMPERATURE = 0.5
-    DEFAULT_MAX_ITERATION = 8
-    MODEL_NAME = "gpt-4.1-mini"
-    MODEL_TEMPERATURE = 0.5
+    MODEL = "gpt-4.1-mini"
+    TEMPERATURE = 0.5
     MAX_ITERATION = 8

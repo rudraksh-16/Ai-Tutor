@@ -10,6 +10,7 @@ from src.llm.deep_research.constant import DeepResearchConstants
 
 logger = logging.getLogger(__name__)
 
+
 class Researcher(Agent):
     def __init__(
         self,
@@ -18,131 +19,117 @@ class Researcher(Agent):
         temperature: float = DeepResearchConstants.DEFAULT_TEMPERATURE,
         max_iteration: int = DeepResearchConstants.DEFAULT_MAX_RETRIES,
     ):
+        """Initialize the Researcher Agent with state and LLM parameters."""
         self.state = state
+        logger.info("Initializing Researcher Agent | Subtopics count: %d", len(state.get("subtopics", [])))
 
-        logger.info("Initializing Researcher Agent")
-
-        logger.info(
-            "Researcher received %d subtopics | existing_sources=%d",
-            len(state.get("subtopics", [])),
-            len(state.get("sources", [])),
-        )
-
-        missing = state.get("missing")
-        logger.info(
-            "Researcher received missing feedback: %s | existing_sources=%d",
-            "YES" if missing else "NO",
-            len(state.get("sources", [])),
-        )
-
-        if missing is not None and not isinstance(missing, str):
-            raise TypeError(f"missing must be str or None, got {type(missing)}")
-
-        current = state.get("current_subtopic")
-        if not current:
-            raise ValueError("Researcher invoked without current_subtopic")
-
-        base_query = f"{state['query']} - {current}"
-        expanded_query = None
-
-        if LLMConfig.ENABLE_QUERY_EXPANSION:
-            expanded_query = expand_query(
-                query=base_query,
-                extra=state.get("success_criteria", {})
-            )
-
-        query = base_query if expanded_query is None else expanded_query
-        logger.info(f"{query}")
+        query = self._prepare_research_query(state)
         super().__init__(
             system_prompt=REACT_SYSTEM_PROMPT,
-            user_prompt=REACT_HUMAN_PROMPT.format(
-                query=query,
-                topic=current,
-                subtopics=state.get("subtopics", []),
-                missing=missing,
-                improvement_instructions=state.get("improvement_instructions"),
-                evidence=[
-                    s["content"]
-                    for s in state.get("sources", [])
-                    if s.get("subtopic") == current
-                ],
-                scratchpad=state.get("scratchpad", ""),
-            ),
+            user_prompt=self._format_research_prompt(query, state),
             model=model,
             temperature=temperature,
             max_iteration=max_iteration,
         )
 
-    def on_tool_result(self, tool_name: str, args: dict, result: dict):
-        scratchpad = self.state.setdefault("scratchpad", "")
-        sources = self.state.setdefault("sources", [])
-        covered = self.state.setdefault("covered_subtopics", {})
-        search_count = self.state.setdefault("search_count", {})
-        search_exhausted = set(self.state.get("search_exhausted", []))
+    def _prepare_research_query(self, state: ResearchState) -> str:
+        """Construct and optionally expand the research query."""
+        current = state.get("current_subtopic")
+        if not current:
+            raise ValueError("Researcher invoked without current_subtopic")
+        
+        base_query = f"{state['query']} - {current}"
+        if not LLMConfig.ENABLE_QUERY_EXPANSION:
+            return base_query
+        
+        expanded = expand_query(query=base_query, extra=state.get("success_criteria", {}))
+        return expanded if expanded is not None else base_query
 
-        executed = set(self.state.setdefault("executed_searches", []))
+    def _format_research_prompt(self, query: str, state: ResearchState) -> str:
+        """Format the React human prompt with current state context."""
+        current = state["current_subtopic"]
+        missing = state.get("missing")
+        evidence = [s["content"] for s in state.get("sources", []) if s.get("subtopic") == current]
+        
+        return REACT_HUMAN_PROMPT.format(
+            query=query,
+            topic=current,
+            subtopics=state.get("subtopics", []),
+            missing=missing,
+            improvement_instructions=state.get("improvement_instructions"),
+            evidence=evidence,
+            scratchpad=state.get("scratchpad", ""),
+        )
 
+    def on_tool_result(self, tool_name: str, args: dict, result: dict) -> None:
+        """Handle incoming search results and update the research state."""
         subtopic = self.state["current_subtopic"]
         query = args.get("query")
 
-        if query in executed:
-            logger.info("Skipping duplicate search: %s", query)
+        if self._is_duplicate_search(query):
             return
 
-        executed.add(query)
-        self.state["executed_searches"] = list(executed)
-
-        count = search_count.get(subtopic, 0)
-        if count >= 5:
-            logger.warning("Max searches reached for subtopic: %s", subtopic)
-
-            search_exhausted.add(subtopic)
-            self.state["search_exhausted"] = list(search_exhausted)
-
-            scratchpad += (
-                f"\n[INFO] Max search limit reached for subtopic: {subtopic}. "
-                "Proceeding with available evidence."
-            )
-
-            self.state["scratchpad"] = scratchpad
+        if self._check_search_limit(subtopic):
             return
-        search_count[subtopic] = count + 1
 
         payload = result.get("results", {})
         responses = payload.get("responses", [])
+        if responses:
+            self._process_search_results(responses, subtopic)
 
-        if not responses:
-            logger.warning("No responses returned for subtopic: %s", subtopic)
-            return
+    def _is_duplicate_search(self, query: str) -> bool:
+        """Check and record unique searches."""
+        executed = set(self.state.setdefault("executed_searches", []))
+        if query in executed:
+            logger.info("Skipping duplicate search: %s", query)
+            return True
+        executed.add(query)
+        self.state["executed_searches"] = list(executed)
+        return False
 
+    def _check_search_limit(self, subtopic: str) -> bool:
+        """Enforce maximum search limit per subtopic."""
+        search_count = self.state.setdefault("search_count", {})
+        count = search_count.get(subtopic, 0)
+        
+        if count >= 5:
+            logger.warning("Max searches reached for subtopic: %s", subtopic)
+            exhausted = set(self.state.get("search_exhausted", []))
+            exhausted.add(subtopic)
+            self.state["search_exhausted"] = list(exhausted)
+            
+            msg = f"\n[INFO] Max search limit reached for subtopic: {subtopic}."
+            self.state["scratchpad"] = self.state.get("scratchpad", "") + msg
+            return True
+        
+        search_count[subtopic] = count + 1
+        return False
+
+    def _process_search_results(self, responses: list, subtopic: str) -> None:
+        """Extract facts and update state with new evidence."""
         facts = extract_atomic_facts(responses, subtopic)
-
+        sources = self.state.setdefault("sources", [])
         existing_urls = {s["url"] for s in sources}
-        facts = [f for f in facts if f["url"] not in existing_urls]
-
-        if not facts:
+        
+        new_facts = [f for f in facts if f["url"] not in existing_urls]
+        if not new_facts:
             return
 
-        sources.extend(facts)
-        covered[subtopic] = covered.get(subtopic, 0) + len(facts)
+        sources.extend(new_facts)
+        covered = self.state.setdefault("covered_subtopics", {})
+        covered[subtopic] = covered.get(subtopic, 0) + len(new_facts)
+        
+        self._update_scratchpad(subtopic, new_facts)
 
+    def _update_scratchpad(self, subtopic: str, facts: list) -> None:
+        """Append fresh findings to the agent's scratchpad."""
+        scratchpad = self.state.get("scratchpad", "")
         scratchpad += f"\nSEARCH executed for subtopic: {subtopic}"
         for f in facts:
-            claim_block = (
-                f"\nClaim: {f['content']}\n"
-                f"Source: {f['url']}\n"
-                f"Dimension: definition\n"
-            )
-            if claim_block not in scratchpad:
-                scratchpad += claim_block
-
-        self.state.update(
-            {
-                "sources": sources,
-                "covered_subtopics": covered,
-                "scratchpad": scratchpad,
-            }
-        )
+            claim = f"\nClaim: {f['content']}\nSource: {f['url']}\nDimension: definition\n"
+            if claim not in scratchpad:
+                scratchpad += claim
+        self.state["scratchpad"] = scratchpad
 
 
 def research_node(state: ResearchState) -> ResearchState:
@@ -168,6 +155,7 @@ def research_node(state: ResearchState) -> ResearchState:
     _, _ = research_agent.invoke(chat_history)
     logger.info("Researcher Agent invoke completed sucessfully")
     return state
+
 
 def extract_atomic_facts(results: list, subtopic: str) -> list[dict]:
     facts = []

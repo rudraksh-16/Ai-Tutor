@@ -1,69 +1,35 @@
-from src.backend.db.database import SessionLocal
-from src.backend.models.chapter_plan import ChapterPlan
-from src.backend.models.chapter import Chapter
-from src.llm.agent_core.args_schema import ArgsSchema as Args
-from src.llm.agent_core.tool import Tool
+from typing import Dict, Any
 from uuid import UUID
 
-
-class GetChapterArgs:
-    args = [
-        (
-            "sequence",
-            Args(type=int, description="Plan sequence number", required=True),
-        )
-    ]
+from src.backend.db.database import SessionLocal
+from src.backend.repository.course_repo import course_repo
+from src.llm.agent_core.tool import Tool
 
 
 def make_get_outline_content(chapter_id: str):
-    def get_outline_content_tool(sequence: int):
-        """Load outline content by outline sequence and chapter id."""
-        db = SessionLocal()
-
-        try:
-            chapter_uuid = UUID(chapter_id)
-            result = (
-                db.query(ChapterPlan.content)
-                .join(Chapter, Chapter.id == ChapterPlan.chapter_id)
-                .filter(
-                    ChapterPlan.chapter_id == chapter_uuid, ChapterPlan.sequence == sequence
-                )
-                .scalar()
-            )
-            return result
-
-        except Exception as e:
-            raise RuntimeError(f"Failed to load the chapter {e}")
-
-        finally:
-            db.close()
-
+    async def get_chapter_content_tool() -> Dict[str, Any]:
+        """Load the full chapter teaching plan content via CourseRepository."""
+        async with SessionLocal() as db:
+            return await course_repo.get_chapter_full_plan(db, UUID(chapter_id))
 
     return Tool(
-        func=get_outline_content_tool,
-        description="Load outline content by outline sequence and chapter id.",
-        args_schema=GetChapterArgs,
+        func=get_chapter_content_tool,
+        description="Load the full chapter teaching plan content for the current chapter.",
     )
 
 
-def get_outline_content(sequence: int, chapter_id: str) -> str:
-    """Load outline content by outline sequence and chapter id."""
-    db = SessionLocal()
-
-    try:
-        chapter_id = UUID(chapter_id)
-        result = (
-            db.query(ChapterPlan.content)
-            .join(Chapter, Chapter.id == ChapterPlan.chapter_id)
-            .filter(
-                ChapterPlan.chapter_id == chapter_id, ChapterPlan.sequence == sequence
+async def get_outline_content(chapter_id: str) -> str:
+    """Load the full chapter plan content (standalone helper)."""
+    async with SessionLocal() as db:
+        try:
+            chapter_uuid = UUID(chapter_id)
+            query = (
+                select(ChapterPlan.content)
+                .filter(ChapterPlan.chapter_id == chapter_uuid)
+                .limit(1)
             )
-            .scalar()
-        )
-        return result
+            res = await db.execute(query)
+            return res.scalar()
 
-    except Exception as e:
-        raise RuntimeError(f"Failed to load the chapter {e}")
-
-    finally:
-        db.close()
+        except Exception as e:
+            raise RuntimeError(f"Failed to load chapter plan: {e}")

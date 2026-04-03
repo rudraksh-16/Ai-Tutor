@@ -1,11 +1,12 @@
 import logging
-from typing import List, Dict
+from typing import List, Dict, Any, Optional
+
 from tavily import TavilyClient
 
-from src.llm.deep_research.tools.rate_limiter import RateLimiter
 from src.llm.agent_core.args_schema import ArgsSchema as Args
 from src.llm.agent_core.tool import Tool
 from src.llm.config import LLMConfig
+from src.llm.deep_research.tools.rate_limiter import RateLimiter
 
 
 logger = logging.getLogger(__name__)
@@ -34,10 +35,8 @@ rate_limiter = RateLimiter(max_calls=5, period=1.0)
 tavily_client = TavilyClient(api_key=LLMConfig.TAVILY_API_KEY)
 
 
-def web_search(query: str, max_results: int = 5) -> List[Dict]:
-    """
-    Production-safe web search using Tavily.
-    """
+def web_search(query: str, max_results: int = 5) -> Dict[str, Any]:
+    """Production-safe web search using Tavily with rate limiting."""
     logger.debug("Web search requested | query=%r | max_results=%d", query, max_results)
     rate_limiter.acquire()
 
@@ -47,30 +46,28 @@ def web_search(query: str, max_results: int = 5) -> List[Dict]:
             max_results=max_results,
             include_raw_content=False,
         )
-
-        results = {
-            "query": query,
-            "responses": [
-                {
-                    "title": item.get("title"),
-                    "content": item.get("content"),
-                    "url": item.get("url"),
-                }
-                for item in response.get("results", [])
-            ],
-        }
-
-        if not results:
-            logger.warning("Tavily returned no results | query=%r", query)
-
-        logger.info(
-            "Web search completed | query=%r | results=%d",
-            query,
-            len(results),
-        )
-
-        return results
-
+        return _format_tavily_results(query, response)
     except Exception:
         logger.exception("Web search failed | query=%r", query)
         raise
+
+
+def _format_tavily_results(query: str, response: dict) -> Dict[str, Any]:
+    """Format the raw Tavily response into a structured dictionary."""
+    results = {
+        "query": query,
+        "responses": [
+            {
+                "title": item.get("title"),
+                "content": item.get("content"),
+                "url": item.get("url"),
+            }
+            for item in response.get("results", [])
+        ],
+    }
+
+    if not results["responses"]:
+        logger.warning("Tavily returned no results | query=%r", query)
+
+    logger.info("Web search completed | query=%r | results=%d", query, len(results["responses"]))
+    return results
