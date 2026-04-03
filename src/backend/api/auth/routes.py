@@ -4,6 +4,7 @@ import logging
 
 from src.backend.db.database import get_db
 from src.backend.api.auth import schemas, services
+from src.backend.api.auth.schemas import TokenRefresh
 from src.backend.api.auth.utils import get_current_user
 from src.backend.models.user import User
 
@@ -48,3 +49,17 @@ async def login_user(request: schemas.UserLogin, db: AsyncSession = Depends(get_
 async def get_me(current_user: User = Depends(get_current_user)):
     """Returns current authenticated user profile."""
     return current_user
+
+@router.post("/refresh", response_model=schemas.Token)
+async def refresh_token(request: TokenRefresh, db: AsyncSession = Depends(get_db)):
+    """Refreshes the access token using a valid refresh token."""
+    try:
+        return await services.refresh_user_token(request.refresh_token, db)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error refreshing token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred: {str(e)}"
+        )

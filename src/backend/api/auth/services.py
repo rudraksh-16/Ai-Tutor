@@ -82,3 +82,17 @@ async def _create_and_persist_user(db: AsyncSession, request: UserCreate) -> Use
     await db.commit()
     await db.refresh(new_user)
     return new_user
+
+async def refresh_user_token(refresh_token: str, db: AsyncSession) -> Token:
+    """Validate a refresh token and return a new token pair."""
+    from src.backend.api.auth.utils import verify_refresh_token
+    # verify_refresh_token already handles expiry checking and fetching the user
+    user = await verify_refresh_token(refresh_token, db)
+    
+    if user.status != UserStatus.ACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is deactivated or unverified"
+        )
+        
+    return Token(**issue_token_pair(user))

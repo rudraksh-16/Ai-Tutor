@@ -59,21 +59,25 @@ async def chat_with_teacher(
 async def _teacher_post_process(
     final_data: dict, chapter_id: UUID
 ) -> AsyncGenerator[str, None]:
-    """Emit quiz notification if agent triggered a status change."""
-    if _should_emit_quiz_ready(final_data):
+    """Emit quiz notification or completion event if agent triggered a status change."""
+    action = _get_status_action(final_data)
+    if action == "quiz_pending":
         yield f"data: {json.dumps({'type': 'quiz_ready', 'chapter_id': str(chapter_id)})}\n\n"
+    elif action == "complete":
+        yield f"data: {json.dumps({'type': 'chapter_completed', 'chapter_id': str(chapter_id)})}\n\n"
 
 
-def _should_emit_quiz_ready(final_data: dict) -> bool:
-    """Check tool calls to determine if the chapter transitioned to quiz_pending."""
+def _get_status_action(final_data: dict) -> str | None:
+    """Check tool calls to determine if the chapter transitioned to a new state."""
     for tc in final_data.get("tool_calls", []):
         tool_input = tc.get("input", {})
         if tool_input.get("name") != "update_status_tool":
             continue
         try:
             args = json.loads(tool_input.get("arguments", "{}"))
-            if args.get("action") in ("complete", "quiz_pending"):
-                return True
+            action = args.get("action")
+            if action in ("complete", "quiz_pending"):
+                return action
         except (json.JSONDecodeError, TypeError):
             continue
-    return False
+    return None
