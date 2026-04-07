@@ -9,6 +9,7 @@ from src.backend.common.exceptions import EntityNotFoundError, ValidationError
 from src.backend.enums.status import ChapterStatus, TopicStatus
 from src.backend.models.chapter import Chapter
 from src.backend.models.chapter_plan import ChapterPlan
+from src.backend.repository.chapter_repo import chapter_repo
 from src.backend.models.topic import Topic
 
 logger = logging.getLogger(__name__)
@@ -24,8 +25,10 @@ class CourseRepository:
 
         if action == "start":
             cls._transition_to_start(chapter, topic)
-        elif action in ("complete", "quiz_pending"):
-            cls._transition_to_complete(chapter, plan)
+        elif action == "quiz_pending":
+            cls._transition_to_quiz_pending(chapter, plan)
+        elif action == "complete":
+            await cls._transition_to_complete(db, chapter, plan)
         else:
             raise ValidationError(f"Invalid status action: {action}")
 
@@ -124,8 +127,19 @@ class CourseRepository:
             topic.status = TopicStatus.IN_PROGRESS
 
     @staticmethod
-    def _transition_to_complete(chapter: Chapter, plan: ChapterPlan) -> None:
+    def _transition_to_quiz_pending(chapter: Chapter, plan: ChapterPlan) -> None:
         plan.is_completed = True
         chapter.status = ChapterStatus.QUIZ_PENDING
+
+    @staticmethod
+    async def _transition_to_complete(db: AsyncSession, chapter: Chapter, plan: ChapterPlan) -> None:
+        plan.is_completed = True
+        chapter.status = ChapterStatus.COMPLETED
+        # Unlock next chapter to PENDING
+        next_chapter = await chapter_repo.get_next_chapter(
+            db, chapter.topic_id, chapter.order_index
+        )
+        if next_chapter:
+            next_chapter.status = ChapterStatus.PENDING
 
 course_repo = CourseRepository()
