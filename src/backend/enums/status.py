@@ -10,6 +10,8 @@ class TopicStatus(enum.Enum):
 class ChapterStatus(enum.Enum):
     LOCKED = "locked"
     PENDING = "pending"
+    GENERATING = "generating"
     IN_PROGRESS = "in_progress"
     QUIZ_PENDING = "quiz_pending"
     COMPLETED = "completed"
+    FAILED = "failed"

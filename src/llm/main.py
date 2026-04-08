@@ -5,8 +5,6 @@ from src.llm.curriculum_agent.tools.get_curriculum import make_get_curriculum_to
 from src.llm.curriculum_agent.tools.web_search import make_web_search_tool
 from src.llm.teacher_agent.agent import TeacherAgent
 from src.llm.teacher_agent.constant import TeacherConstants
-from src.llm.planner.chapter_planner import Planner
-from src.llm.planner.constant import PlannerConstants
 
 
 async def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
@@ -22,16 +20,6 @@ async def run_curriculum_agent(user_id: str, topic_id: str, chat_history: list):
     agent.add_tool(make_web_search_tool())
     async for event in agent.astream(chat_history):
         yield event
-
-
-async def run_planner(topic_id: str, on_progress=None):
-    planner = Planner(
-        topic_id=topic_id,
-        temperature=PlannerConstants.TEMPERATURE,
-        model=PlannerConstants.MODEL,
-        max_retries=PlannerConstants.MAX_RETRIES,
-    )
-    await planner.invoke(on_progress=on_progress)
 
 
 async def run_teacher_agent(chapter_id: str, chat_history: list):

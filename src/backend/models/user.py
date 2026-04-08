@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, String, Boolean, Enum
+from sqlalchemy import Column, String, Boolean, Enum, DateTime
 from sqlalchemy.orm import relationship
 
 from src.backend.models.base import BaseModel
@@ -18,6 +18,7 @@ class User(BaseModel):
     email = Column(String, unique=True, nullable=False, index=True)
     password_hash = Column(String, nullable=True)  # Null for invited users
     is_verified = Column(Boolean, default=True) # Automatically verified for now
+    last_generation_at = Column(DateTime(timezone=True), nullable=True)
     status = Column(
         Enum(UserStatus, name="userstatus", values_callable=lambda x: [e.value for e in x]), 
         default=UserStatus.ACTIVE

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Text, Integer, String, Boolean, Index
+from sqlalchemy import Column, ForeignKey, Text, Integer, String, Boolean, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -9,6 +9,7 @@ class ChapterPlan(BaseModel):
     __tablename__ = "chapter_plans"
     __table_args__ = (
         Index("ix_chapter_plans_chapter_order", "chapter_id", "order_index"),
+        UniqueConstraint("chapter_id", "order_index", name="uq_chapter_plan_chapter_order"),
     )
 
     title = Column(String, nullable=False)

@@ -1,23 +1,32 @@
 from src.llm.quiz_agent.agent import QuizAgent
-from src.llm.quiz_agent.tools.get_outline_content import make_get_outline_content
-from src.llm.quiz_agent.constant import QuizConstants
+from src.llm.quiz_agent.tools.get_outline_content import make_get_section_content
 from src.llm.agent_core.tool import Tool
 
 
-def make_create_quiz(chapter_id: str):
-    async def create_quiz_tool():
-        agent = QuizAgent(
-            chapter_id=chapter_id,
-            model=QuizConstants.MODEL,
-            max_iteration=QuizConstants.MAX_ITERATION,
-            temperature=QuizConstants.TEMPERATURE,
-        )
-        agent.add_tool(make_get_outline_content(chapter_id))
+import json
 
-        result = await agent.invoke([])
-        return result[0] if isinstance(result, tuple) else result
+def make_create_quiz(chapter_id: str):
+    async def create_quiz_tool(section_id: str = None) -> str:
+        """Generate an interactive mini-quiz for a specific sub-chapter.
+
+        Args:
+            section_id: The UUID of the sub-chapter to test. Defaults to chapter-level.
+
+        Returns:
+            JSON string containing section_id and the generated questions.
+        """
+        target_id = section_id or chapter_id
+        agent = QuizAgent(section_id=target_id)
+        
+        raw_quiz, _ = await agent.invoke([])
+        
+        # Return structured data so frontend knows the context
+        return json.dumps({
+            "section_id": target_id,
+            "quiz": raw_quiz
+        })
 
     return Tool(
         func=create_quiz_tool,
-        description="Generate an interactive quiz covering the entire chapter content.",
+        description="Generate an interactive quiz. Argument: section_id (sub-chapter ID).",
     )

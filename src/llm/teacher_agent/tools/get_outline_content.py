@@ -16,20 +16,3 @@ def make_get_outline_content(chapter_id: str):
         func=get_chapter_content_tool,
         description="Load the full chapter teaching plan content for the current chapter.",
     )
-
-
-async def get_outline_content(chapter_id: str) -> str:
-    """Load the full chapter plan content (standalone helper)."""
-    async with SessionLocal() as db:
-        try:
-            chapter_uuid = UUID(chapter_id)
-            query = (
-                select(ChapterPlan.content)
-                .filter(ChapterPlan.chapter_id == chapter_uuid)
-                .limit(1)
-            )
-            res = await db.execute(query)
-            return res.scalar()
-
-        except Exception as e:
-            raise RuntimeError(f"Failed to load chapter plan: {e}")

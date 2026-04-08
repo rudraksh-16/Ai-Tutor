@@ -9,7 +9,6 @@ from src.backend.api.v1.router import api_router
 from src.backend.api.auth.routes import router as auth_router
 from src.backend.config import Config
 from src.llm.config import LLMConfig
-from src.backend.services.planner_service import PlannerService
 from src.backend.common.exceptions import BaseAppError
 
 # Create logs directory if it doesn't exist
@@ -120,10 +119,11 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Recover any stalled planning tasks
-    await PlannerService.recover_stalled_tasks()
+    # Startup
+    logger.info("AI Tutor API starting up.")
     yield
-    # Shutdown logic (if any) could go here
+    # Shutdown
+    logger.info("AI Tutor API shutting down.")
 
 app = FastAPI(
     title="AI Tutor API",

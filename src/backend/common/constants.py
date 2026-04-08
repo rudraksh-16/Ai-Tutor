@@ -1,0 +1,15 @@
+# src/backend/common/constants.py — Shared Project Constants
+
+# ─── Quiz & Completion ───
+PASS_THRESHOLD_PERCENT = 80
+DEFAULT_QUIZ_QUESTION_COUNT = 3
+SECTION_QUIZ_QUESTION_COUNT = 2
+
+# ─── Generation & Polling ───
+MAX_POLLING_ATTEMPTS = 40
+POLLING_INTERVAL_SECONDS = 3
+CHAPTER_GENERATION_TIMEOUT_MINUTES = 15
+
+# ─── Auth & Security ───
+TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+GENERATION_COOLDOWN_SECONDS = 60

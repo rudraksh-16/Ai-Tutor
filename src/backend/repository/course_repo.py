@@ -84,20 +84,54 @@ class CourseRepository:
 
     @staticmethod
     async def get_chapter_full_plan(db: AsyncSession, chapter_id: UUID) -> Dict[str, Any]:
-        """Fetch the title and full textual content for a chapter's teaching plan."""
+        """Build smart focused context for the teacher agent.
+
+        Returns:
+            - current_section: Full content of the active (first incomplete) section
+            - previous_summary: First 300 chars of the previous section (for continuity)
+            - upcoming_titles: Titles of upcoming sections (for awareness)
+            - all_sections_combined: Full concatenation (fallback)
+        """
         query = (
-            select(ChapterPlan.content, ChapterPlan.title)
+            select(ChapterPlan)
             .filter(ChapterPlan.chapter_id == chapter_id)
-            .limit(1)
+            .order_by(ChapterPlan.order_index)
         )
         res = await db.execute(query)
-        row = res.first()
-        if not row:
+        sections = list(res.scalars().all())
+        if not sections:
             raise EntityNotFoundError(f"No plan found for chapter_id: {chapter_id}")
-        
+
+        # Find the active section (first incomplete one)
+        active_index = 0
+        for i, s in enumerate(sections):
+            if not s.is_completed:
+                active_index = i
+                break
+        else:
+            active_index = len(sections) - 1  # All done, use last
+
+        current = sections[active_index]
+        previous_summary = ""
+        if active_index > 0:
+            prev = sections[active_index - 1]
+            previous_summary = prev.content[:300] + "..."
+
+        upcoming_titles = [s.title for s in sections[active_index + 1:]]
+
+        # Build focused context string
+        context_parts = [f"## CURRENT SECTION: {current.title}\n{current.content}"]
+        if previous_summary:
+            context_parts.insert(0, f"## PREVIOUS SECTION SUMMARY:\n{previous_summary}")
+        if upcoming_titles:
+            context_parts.append(f"## UPCOMING SECTIONS:\n" + "\n".join(f"- {t}" for t in upcoming_titles))
+
         return {
-            "title": row.title,
-            "content": row.content,
+            "title": current.title,
+            "content": "\n\n".join(context_parts),
+            "position": f"Section {active_index + 1} of {len(sections)}",
+            "completed_sections": active_index,
+            "total_sections": len(sections),
         }
 
     @staticmethod

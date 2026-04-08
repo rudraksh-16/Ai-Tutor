@@ -11,6 +11,9 @@ class QuizQuestion(BaseModel):
     chapter_id = Column(
         UUID(as_uuid=True), ForeignKey("chapters.id", ondelete="CASCADE"), nullable=False
     )
+    section_id = Column(
+        UUID(as_uuid=True), ForeignKey("chapter_plans.id", ondelete="CASCADE"), nullable=True
+    )
     question_text = Column(Text, nullable=False)
     question_type = Column(String, nullable=False)  # "mcq" or "open"
     options = Column(JSONB, nullable=True)  # For MCQ: ["A) ...", "B) ...", ...]
