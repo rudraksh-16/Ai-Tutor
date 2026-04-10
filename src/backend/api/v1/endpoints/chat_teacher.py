@@ -1,30 +1,26 @@
-import asyncio
 import json
-import logging
 from typing import AsyncGenerator
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.api.auth.utils import get_current_user
 from src.backend.api.v1.endpoints.chapters import verify_chapter_ownership
-from src.backend.common.exceptions import BaseAppError
 from src.backend.db.database import get_db
 from src.backend.models.user import User
 from src.backend.repository.message_repo import message_repo
 from src.backend.services.chat_coordinator import ChatCoordinator
 from src.backend.services.teacher_service import TeacherService
 
-logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
 
 class TeacherChatRequest(BaseModel):
     chapter_id: UUID
-    user_message: str
+    user_message: str | None = None
+    resume_stream: bool = False
 
 
 @router.post("/teacher")
@@ -39,7 +35,25 @@ async def chat_with_teacher(
     conversation = await TeacherService.get_or_create_conversation(
         db, current_user.id, request.chapter_id
     )
+    if request.resume_stream:
+        return await ChatCoordinator.create_streaming_response(
+            conversation.id,
+            None,
+            TeacherService.save_stream_results,
+            final_payload_callback=lambda data: _teacher_post_process(data, request.chapter_id)
+        )
+
     chat_history = await TeacherService.load_chat_history(db, conversation.id)
+    if await ChatCoordinator.has_active_run(conversation.id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A teacher response is already streaming.",
+        )
+    if not request.user_message:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="user_message is required.",
+        )
 
     # 1. Persist user message
     await message_repo.add_user_message(db, conversation.id, request.user_message)

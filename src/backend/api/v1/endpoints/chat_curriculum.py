@@ -10,9 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.api.auth.utils import get_current_user
-from src.backend.common.exceptions import BaseAppError
 from src.backend.db.database import get_db
-from src.backend.enums.status import ChapterStatus
 from src.backend.models.user import User
 from src.backend.repository.message_repo import message_repo
 from src.backend.repository.topic_repo import topic_repo
@@ -28,14 +26,19 @@ router = APIRouter()
 class CurriculumChatRequest(BaseModel):
     topic_id: UUID
     user_message: Optional[str] = None
+    resume_stream: bool = False
+
 
 class ChapterAccept(BaseModel):
     title: str
     items: List[str]
 
+
 class CurriculumPlanRequest(BaseModel):
     topicTitle: Optional[str] = None
     chapters: List[ChapterAccept] = []
+
+
 @router.post("/curriculum")
 async def chat_with_curriculum(
     request: CurriculumChatRequest,
@@ -46,10 +49,28 @@ async def chat_with_curriculum(
     conversation = await CurriculumService.get_or_create_conversation(
         db, current_user.id, request.topic_id
     )
+    if request.resume_stream:
+        return await ChatCoordinator.create_streaming_response(
+            conversation.id,
+            None,
+            CurriculumService.save_stream_results,
+            final_payload_callback=lambda data: _curriculum_post_process(data, request.topic_id)
+        )
+
     chat_history = await CurriculumService.load_chat_history(db, conversation.id)
+    if await ChatCoordinator.has_active_run(conversation.id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A curriculum response is already streaming for this topic.",
+        )
 
     # 1. Process Initial/Auto-start Message
     user_msg = await _get_effective_user_message(db, request, chat_history)
+    if not user_msg:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A user message is required once the curriculum chat has started.",
+        )
     if user_msg:
         await message_repo.add_user_message(db, conversation.id, user_msg)
         chat_history.append({"role": "user", "content": user_msg})
@@ -88,7 +109,7 @@ async def _curriculum_post_process(collected_final: dict, topic_id: UUID) -> Asy
     if has_upsert:
         logger.info("Curriculum saved for topic %s, auto-triggering planner", topic_id)
         yield f"data: {json.dumps({'type': 'planning_started'})}\n\n"
-    asyncio.create_task(PlannerService.run_planner_and_finalize(str(topic_id)))
+        asyncio.create_task(PlannerService.run_planner_and_finalize(str(topic_id)))
 
 
 @router.post("/curriculum/{topic_id}/plan")
